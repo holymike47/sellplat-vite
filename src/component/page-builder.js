@@ -966,7 +966,7 @@ this.parent.submitPost(serial);
  */
 createColumn(n,withMenu=true){
 let col1,col2,col3,col4;
-let container = this.main.pbu.createElement('div',['container','sp-container',this.blockMargin]);
+let container = this.main.pbu.createElement('div',['container-fluid','sp-container',this.blockMargin]);
 container.setAttribute('d','d');//just for ref
 let row = this.main.pbu.createElement('div',['row','sp-row','g-2']);
 row.setAttribute('n',n);

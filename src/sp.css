@@ -22,6 +22,7 @@
 body{
   background:var(--sp-bg);
   color:var(--sp-text);
+  font-size: 1.25rem;
 }
 
 .card,.sp-bg-color,.sp-bg{

@@ -112,7 +112,7 @@ this.main.pbu.createFormControl({id:'description',title:"Description",value:this
       <div id = "displaySection" class="container">
       <h5>Selected Menu</h5>
     </div>
-<p><button class="btn float-start menu-save" type="button">Save</button></p>
+<p><button class="btn btn-primary float-start menu-save" type="button">Save</button></p>
     </div>
     
     <!--#Selected Menu--> 

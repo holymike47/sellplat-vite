@@ -234,8 +234,8 @@ this.main.pbu.replace(modalBody,body);
 let input = modalBody?.querySelector('input.sp-modal-input');
 let actionDiv = this.pbu.createElement('div',['mt-2']);
 modalBody.appendChild(actionDiv);
-let cancelButton = this.pbu.createElement('button',['btn','float-start'],'Cancel');
-let confirmButton = this.pbu.createElement('button',['btn','float-end'],'OK');
+let cancelButton = this.pbu.createElement('button',['btn','btn-primary','float-start'],'Cancel');
+let confirmButton = this.pbu.createElement('button',['btn','btn-primary','float-end'],'OK');
 this.pbu.appendChild(actionDiv,cancelButton,confirmButton);
 
 this.pbu.listen(cancelButton,'click',()=>{

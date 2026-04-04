@@ -440,11 +440,11 @@ this.postDetailSection = this.main.pbu.createElement('main',['post']);
 this.main.pbu.appendChild(this.postDetailSection,
 `
 <!--viewContainer-->
-<div id = "viewContainer" class="default container" style="min-height: 100vh;">
+<div id = "viewContainer" class="container-fluid" style="min-height: 100vh;">
 <header class="header mb-4">
 ${this.main.pbu.outerHTML(this.headerTemplate?this.headerTemplate:this.getMenuTemplate('main'))}
 </header>
-<main id="mainContent" class="container sp-container">
+<main id="mainContent" class="sp-container">
      <!--Row-->
 <div class="row sp-row">
   <div class="content ${this.main.pbu.addClassIf(p.sidebarType=='NONE',['col-12'],['col-md-9','order-2'])}">
@@ -605,7 +605,12 @@ let detailLinks = this.main.pbu.queryAll('a.sp-detail');
 for(let link of detailLinks){
   this.main.pbu.listen(link,'click',(e)=>{
     e.preventDefault();
-    this.main.handleView(link.pathname,false);
+    let isInit = false;
+    if(link.classList.contains('sp-slug-link')){
+        //clicking on site logo or home to simulate site refresh
+        isInit = true;
+    }
+    this.main.handleView(link.pathname,isInit);
   });
 }//for
 // search
