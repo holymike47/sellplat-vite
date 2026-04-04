@@ -1,0 +1,58 @@
+   /*
+   * Added
+   */
+   /*
+   * themes
+   */
+
+:root{
+  --bs-primary: #2563eb;
+  --bs-body-bg: #ffffff;
+  --bs-body-color: #111827;
+
+  --sp-primary:#2563eb;
+  --sp-primary-hover:#1d4ed8;
+  --sp-bg:#ffffff;
+  --sp-card:#f9fafb;
+  --sp-text:#111827;
+  --sp-muted:#6b7280;
+  --sp-border:#e5e7eb;
+}
+
+body{
+  background:var(--sp-bg);
+  color:var(--sp-text);
+}
+
+.card,.sp-bg-color,.sp-bg{
+  background:var(--sp-card);
+  border:1px solid var(--sp-border);
+}
+
+a,.sp-nav-link,.sp-h,.sp-list-group i{
+  color:var(--sp-primary);
+}
+
+a:hover,.sp-link:hover{
+  color:var(--sp-primary-hover);
+}
+
+.sp-btn,.btn-primary{
+  color:white;
+  background:var(--sp-primary);
+}
+
+.btn-primary:hover,.sp-btn:hover{
+  color:white;
+  background:var(--sp-primary-hover);
+}
+
+
+
+.dragging {
+   background: #ddd;
+  opacity: 0.5;
+}
+.drop-zone{
+  min-height:  30px;
+}

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en" id="sp">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+  </head>
+  <body class="sp-body">
+  <div id="sp" class="sp" style="position: relative;"><!--sp-->
+     <!--Notification-->
+<section class="position-relative">
+<section class="position-absolute z-10" style="left: 40vw;top: 10px;">
+ <div class="d-flex align-items-center justify-content-center">
+<div id="mainNotification" class="notification"></div>
+</div>
+</section>
+</section><!--#Notification-->
+
+    <!--Replace-->
+    <div id="replace" class="container-fluid">
+   
+    </div>
+     <!--#Replace-->
+
+     <!--COMPONENTS-->
+     <div class="component d-none">
+       <!--container-->
+<main id="dashboardComponent" class="dashboard position-relative dashboard-component container-fluid p-0 d-none">
+<!-- row -->
+<div class="container-fluid default p-0">
+<!-- row -->
+<div class="row">
+<!-- Left sidebar -->
+  <div id="leftSidebar" class="sidebar border border-right col-md-1 col-lg-1 ms-0 px-1 bg-body-tertiary">
+    <div class="offcanvas-md offcanvas-end bg-body-tertiary p-0" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="sidebarMenuLabel">Company name</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a  target="_blank" ariaCurrentWhenActive="page" class="px-0 sp-link sp-home-link sp-route-link nav-link">
+              <i class="bi bi-house-fill"></i>
+              Site Home
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a data-href="/dashboard/page/detail/0" class="px-0 sp-link sp-admin-link sp-route-link nav-link">
+              <i class="bi bi-gear-wide-connected"></i>
+              Dashboard
+            </a>
+          </li>
+  
+          <li class="nav-item">
+            <a data-href="/option/page/detail/0" id="optionLink" class="px-0 sp-link sp-admin-link sp-route-link nav-link">
+              <i class="bi bi-gear-wide-connected"></i>
+              Settings
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a id="menuLink" data-href="/menu/page/list/0" class="px-0 sp-link sp-admin-link sp-route-link nav-link">
+              <i class="bi bi-menu-button"></i>
+              Menu
+            </a>
+          </li>
+
+         <li class="nav-item">
+            <a data-href="/user/page/list/0" id="userLink" class="px-0 sp-link sp-admin-link sp-route-link nav-link">
+              <i class="bi bi-person"></i>
+              Users
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a data-href="/post/page/list/0" id="pageLink" class="px-0 sp-link sp-admin-link sp-route-link nav-link">
+              <i class="bi bi-file-earmark"></i>
+              Pages
+            </a>
+          </li>
+
+          <li class="nav-item dropdown">
+          <a class="px-0 nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-file-earmark-post"></i>Posts
+          </a>
+          <ul class="dropdown-menu">
+            <li><a data-href="/post/post/list/0" id="postLink" class="dropdown-item sp-link sp-admin-link sp-route-link nav-link" ><i class="bi bi-file-earmark-post"></i>All Posts</a></li>
+            <li><a data-href="/category/post/list/0"  class="dropdown-item sp-link sp-admin-link sp-route-link nav-link" ><i class="bi bi-tags"></i>Categories</a></li>
+          </ul>
+        </li>
+
+        <li class="nav-item dropdown">
+          <a class="px-0 nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-file-earmark-post"></i>Products
+          </a>
+          <ul class="dropdown-menu">
+            <li><a data-href="/post/product/list/0" id="postLink" class="dropdown-item sp-link sp-admin-link sp-route-link nav-link" ><i class="bi bi-file-earmark-post"></i>All Products</a></li>
+            <li><a data-href="/category/product/list/0"  class="dropdown-item sp-link sp-admin-link sp-route-link nav-link" ><i class="bi bi-tags"></i>Categories</a></li>
+          </ul>
+        </li>
+
+
+          
+        </ul>
+
+        <hr class="my-3">
+
+        <ul class="nav flex-column mb-auto">
+          <li class="nav-item">
+            <a id="signoutLink" href="/signout" class="px-0 sp-link nav-link" style="cursor: pointer;">
+              <i class="bi bi-door-closed"></i>
+              Sign out
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <!-- #Left sidebar -->
+<!--main section-->
+  <div id = "main" class="col-md-11 ms-sm-auto col-lg-11">
+    <header><h2 class="h2">Dashboard</h2></header>
+      <div id="dashboardReplace"></div>
+    </div><!--#main section-->
+</div><!-- #row -->
+<p><a href="/">sellplat.io</a></p>
+</div><!--#container-->
+
+<div class="temp-section">
+      <!--promptmodal-->
+<section>
+<button id="promptModalTrigger" data-bs-toggle="modal" data-bs-target="#promptModal"></button>
+<div class="modal fade" id="promptModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+
+        </div>
+        <div class="modal-footer">
+          <span id="modalButton"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section><!--#promptmodal-->
+
+<!--Status message-->
+<div id="statusMessage" class="fixed-bottom  notification">
+</div>
+<!--#Status message-->
+</div>
+</main>
+      <!--Dashboard-->
+     
+<!-- Post -->
+<main id="postComponent" class="post--component">
+ <section id="postFormSection" class = "d-none">
+<div class="container-fluid">
+  <div class="row">
+<!--main form-->
+<div class="col-md-10 col-lg-10 main-form"> 
+<form id="postForm" class="post-form">
+<div class="main-content mb-3"></div>
+</form>
+<!--product data-->
+  <div class="product-data mb-3 p-3 d-none">
+    <!--Tab panel-->
+  <ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="generalDataTab" data-bs-toggle="tab" data-bs-target="#generalData" type="button" role="tab" aria-controls="generalData" aria-selected="true">General</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="advancedDataTab" data-bs-toggle="tab" data-bs-target="#advancedData" type="button" role="tab" aria-controls="advancedData" aria-selected="false">Advanced</button>
+    </li>
+  </ul>
+  
+  <div class="tab-content" id="productData">
+    <!--general data-->
+    <div class="tab-pane fade show active" id="generalData" role="tabpanel" aria-labelledby="generalDataTab">
+      <div  class="small section-body">
+    <form class="p-2">
+<div class="mb-3 row">
+  <label for="regularPrice" class="col-sm-2 col-form-label">Regular Price</label>
+  <div class="col-sm-6">
+    <input class="form-control regular-price" id="regularPrice">
+  </div>
+</div>
+
+<div class="mb-3 row">
+  <label for="salesPrice" class="col-sm-2 col-form-label">Sales Price</label>
+  <div class="col-sm-6">
+    <input class="form-control sales-price" id="salesPrice">
+  </div>
+</div>
+</form>
+    </div>
+</div><!--#general data-->
+
+<!--Advanced data-->
+    <div class="tab-pane fade" id="advancedData" role="tabpanel" aria-labelledby="advancedDataTab">
+      <div  class="small section-body">
+
+      </div>
+    </div><!--#Advanced data-->
+  </div>
+  <!--#Tab panel-->
+      
+  </div>
+    <!--#product data-->
+    </div>
+<!--#main form-->
+<!--right sidebar-->
+  <div class="col-md-2 col-lg-2">
+    <!--Tab panel-->
+  <ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="basic-settings-tab" data-bs-toggle="tab" data-bs-target="#basic-settings" type="button" role="tab" aria-controls="basic-settings" aria-selected="true">Basic</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="basic-settings-tab" data-bs-toggle="tab" data-bs-target="#advance-settings" type="button" role="tab" aria-controls="advance-settings" aria-selected="false">Advance</button>
+    </li>
+  </ul>
+  
+  <div class="tab-content" id="myTabContent">
+    <!--Basic Settings-->
+    <div class="tab-pane fade show active" id="basic-settings" role="tabpanel" aria-labelledby="basic-settings-tab">
+      <div  class="small section-body">
+        <!--Featured Image-->
+          <section class="card featured-image mb-2 d-none">
+          </section><!--Featured Image-->
+
+        <!--Excerpt-->
+        <section class="card mb-2 excerpt d-none">
+            <button type="button" class="btn excerpt">Add an excerpt</button>
+        </section><!--#Excerpt-->
+
+        <!--contentStatus-->
+          <section class="card content-status mb-2">
+            <p>Content Status</p>
+            <div class="card-body content-status"></div>
+          </section><!--#contentStatus-->
+
+        <!--Categories-->
+        <section class="card mb-2 post-categories d-none">
+          <p>Category</p>
+          <div class="card-body">
+            <div class="post-categories"></div>
+            <div id="createCategory">
+            <a type="button" class="btn btn-sm create-category">Create New Category</a>
+          </div>
+          </div>
+        </section>  <!--#Categories-->
+
+    
+    <!--Tags-->
+    <section class="card mb-2 tags d-none">
+      <div class="card-body">
+          <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="collapse" data-bs-target="#addTag" aria-expanded="false" aria-controls="addTag">
+            Tags
+          </button>
+        <div class="collapse" id="addTag">
+    <div class="mb-3">
+      <div class="tags">
+      </div>
+
+      <p>Add new tag</p>
+        <textarea name="tags"  class="form-control tags"></textarea>
+        <div class="position-relative">
+            <ul class="list-group mt-2 tag-intended d-none position-absolute z-10">
+          </ul>
+          </div>
+      <p><small>Separate with comma</small><button id="postTagsAddButton">Add</button></p>
+    </div>
+        </div>
+    
+      </div>
+    </section><!--#Tags-->
+
+    <!--SidebarType-->
+    <section class="card mb-2 sidebar-type">
+      <p>Sidebar layout</p>
+      <div class="card-body sidebar-type w-100"></div>
+    </section><!--#SidebarType-->
+
+<!--Widgets-->
+<section class="card mb-2 sidebar-widgets p-2 d-none">
+<p>Widgets</p>
+<div class="form-check form-switch">
+  <input class="form-check-input" type="checkbox" role="switch" id="recentPostsWidgetControl">
+  <label class="form-check-label" for="recentPostsWidgetControl">Recent Posts</label>
+</div>
+<div id="recentPostsWidgetSettings" class="d-none"></div>
+</section><!--#Widgets-->
+
+    
+    </div>
+</div><!--#Basic settings-->
+
+<!--Advance settings-->
+    <div class="tab-pane fade" id="advance-settings" role="tabpanel" aria-labelledby="advance-settings-tab">
+      <div  class="small section-body">
+<!--IsFeatured-->
+<section class="card mb-2 is-featured d-none">
+<div class="card-body is-featured">
+  <div class="form-check form-switch">
+    <input  id = "isFeatured" name="isFeatured"  class="form-check-input is-featured" type="checkbox">
+    <label class="form-check-label" for="isFeatured">Featured Post?</label>
+  </div>
+</div>
+</section> <!--#IsFeatured-->
+
+<!--IsSticky-->
+<section class="card mb-2 is-sticky d-none">
+<div class="card-body is-sticky">
+  <div class="form-check form-switch">
+    <input  name="isSticky" id="isSticky"  class="form-check-input is-sticky" type="checkbox">
+    <label class="form-check-label" for="isSticky">Sticky Post?</label>
+  </div>
+</div>
+</section> <!--#isSticky-->
+
+<!--allow comments-->
+<section class="card mb-2 allow-comments d-none">
+<div class="card-body allow-comments">
+  <div class="form-check form-switch">
+    <input  name="allowComments" id="allowComments"  class="form-check-input allow-comments" type="checkbox">
+    <label class="form-check-label" for="allowComments">Allow Comments</label>
+  </div>
+</div>
+</section> <!--#allow comments-->
+      </div>
+    </div><!--#Advance settings-->
+  </div>
+  <!--#Tab panel-->
+      
+  </div>
+    <!--#right sidebar-->
+  </div>
+     
+</div>
+</section>
+</main>
+<!-- #Post -->
+     </div>
+      <!--#COMPONENTS-->
+    </div><!-- #sp-->
+
+<!-- Temp -->
+
+   <section id="tempSection" class="d-none">
+<div class="row position-relative" style="z-index: 101;cursor: move;"></div>
+<img src="/cc_logo_trans.png">
+
+<div style="width: 75%;max-width: 100%;"></div>
+<div></div>
+
+   </section>
+     <!-- #Temp -->
+<script type="module" src="/src/main.js"></script>
+  </body>
+</html>

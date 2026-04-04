@@ -1,0 +1,62 @@
+   /*
+   * Added
+   */
+   /*
+   * themes
+   */
+
+:root {
+  --primary-color: #000000;
+  --background-color: #ffffff;
+  --background-color-subtle: #f8f9fa;
+  --text-color: #000000;
+  --link-color:#0dcaf0;
+}
+
+body {
+  background: var(--background-color);
+  color: var(--text-color);
+  font-size: 1.2em;
+}
+
+.sp-h{
+color:var(--primary-color);
+}
+
+.active,.sp-btn,.sp-btn:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.sp-bg-color {
+background: var(--background-color-subtle);
+color: #000000;
+}
+
+.sp-site-title{
+color: var(--primary-color);
+font-size: 1.4em;
+font-weight: 600;
+text-decoration: none;
+}
+a,a:hover,.sp-nav-link,.sp-nav-link:hover{
+  color: var(--primary-color);
+}
+
+.sp-hr{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#dashboardComponent button,#dashboardComponent .btn{
+  background-color: #0dcaf0;
+  color: #ffffff;
+}
+
+.dragging {
+   background: #ddd;
+  opacity: 0.5;
+}
+.drop-zone{
+  min-height:  30px;
+}
