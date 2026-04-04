@@ -1131,12 +1131,12 @@ let div = this.main.pbu.createElement('div');
 div.innerHTML = 
 `
 <div class="${this.main.pbu.addClassIf(data.type=='r',['btn-group-vertical'])}">
-    <button name="bgColor" type="button" class="btn"><i class="bi bi-paint-bucket"></i></button>
-    <button name="clasz" type="button" class="btn ${this.main.pbu.addClassIf(isEl,['d-none'])}"><i class="bi bi-css"></i></button>
-    <button name="remove" type="button" class="btn"><i class="bi bi-x-square"></i></button>
-    <button name="moveUp" type="button" class="btn ${this.main.pbu.addClassIf(isColumn,['d-none'])}"><i class="bi bi-arrow-up-square"></i></button>
-    <button name="moveDown" type="button" class="btn ${this.main.pbu.addClassIf(isColumn,['d-none'])}"><i class="bi bi-arrow-down-square"></i></button>
-    <button name="spacer" type="button" class="btn"><i class="bi bi-distribute-vertical"></i></button>
+    <button name="bgColor" type="button" class="btn btn-primary"><i class="bi bi-paint-bucket"></i></button>
+    <button name="clasz" type="button" class="btn btn-primary ${this.main.pbu.addClassIf(isEl,['d-none'])}"><i class="bi bi-css"></i></button>
+    <button name="remove" type="button" class="btn btn-primary"><i class="bi bi-x-square"></i></button>
+    <button name="moveUp" type="button" class="btn btn-primary ${this.main.pbu.addClassIf(isColumn,['d-none'])}"><i class="bi bi-arrow-up-square"></i></button>
+    <button name="moveDown" type="button" class="btn btn-primary ${this.main.pbu.addClassIf(isColumn,['d-none'])}"><i class="bi bi-arrow-down-square"></i></button>
+    <button name="spacer" type="button" class="btn btn-primary"><i class="bi bi-distribute-vertical"></i></button>
 </div>
 `;
 let names = div.querySelectorAll('[name]');
@@ -1258,7 +1258,7 @@ getBlockMenu(){
 let dropDown = this.main.pbu.createElement('div',['dropdown','sp-dropdown']);
 dropDown.innerHTML = 
 `
-  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add</button>
+  <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Add</button>
   <ul class="dropdown-menu">
     <li><button action="getButtonBlock" block-type="block" class="dropdown-item" type="button">Button</button></li>
     <li><button action="getHeadingBlock" block-type="block" class="dropdown-item" type="button">Heading</button></li>
@@ -1370,9 +1370,9 @@ sizeSettings.innerHTML =
 `
 <p>Size</p>
 <div class="sp-size btn-group m-2" role="group">
-  <button type="button" data-size="small" class="btn sp-small">Small</button>
-  <button type="button" data-size="medium" class="btn sp-medium">Medium</button>
-  <button type="button" data-size="large" class="btn sp-large">Large</button>
+  <button type="button" data-size="small" class="btn btn-primary sp-small">Small</button>
+  <button type="button" data-size="medium" class="btn btn-primary sp-medium">Medium</button>
+  <button type="button" data-size="large" class="btn btn-primary sp-large">Large</button>
 </div>
 `;
 generalSettings.appendChild(sizeSettings);
@@ -1404,9 +1404,9 @@ alignSettings.innerHTML =
 `
 <p>Align</p>
 <div class="sp-align btn-group m-2" role="group">
-  <button data-align="left" type="button" class="btn sp-left">Left</button>
-  <button data-align="center" type="button" class="btn sp-center">Center</button>
-  <button data-align="right" type="button" class="btn sp-right">Right</button>
+  <button data-align="left" type="button" class="btn btn-primary sp-left">Left</button>
+  <button data-align="center" type="button" class="btn btn-primary sp-center">Center</button>
+  <button data-align="right" type="button" class="btn btn-primary sp-right">Right</button>
 </div>
 `;
 generalSettings.appendChild(alignSettings);
