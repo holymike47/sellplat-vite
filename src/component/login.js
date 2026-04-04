@@ -30,12 +30,14 @@ this.loginComponent.innerHTML =
       <section class='login'>
      ${this.main.pbu.createFormControl({serialize:true,id:'email',title:"Email",name:'Email'})}
     ${this.main.pbu.createFormControl({serialize:true,id:'password',title:"Password",name:'Password',type:'password'})}
-    <button class="btn w-100 py-2 login" type="button">Sign in</button>
+    <button class="btn btn-primary w-100 py-2 login" type="button">Sign in</button>
    </section>
 
     <section class="auth-token d-none">
+    div class="sp-form-control mb-2">
     <input type="text" class="form-control auth-token">
-    <button class="btn w-100 py-2 auth-token" type="button">Verify</button>
+    </div>
+    <button class="btn btn-primary w-100 py-2 auth-token" type="button">Verify</button>
     </section>
   </form>
 `;
