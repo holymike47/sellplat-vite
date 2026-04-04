@@ -96,10 +96,14 @@ data.v = {
     wi:otherSettings.querySelector('input.wi').checked,
     wm:otherSettings.querySelector('input.wm').checked
   }
+
   
   let bc = await $this.getRecentPostsWidget(data);
+  let el = 
   //replaceChild(newChild, oldChild)
   r.bc.parentElement.replaceChild(bc,r.bc);
+  //update attributes to enable saving
+  
   //
   return true;
 }
@@ -189,6 +193,12 @@ data.v = {
   
   let bc = await $this.getRecentPostsWidget(data);
   $this.main.pbu.replace(r.el,bc.querySelector('[m]').innerHTML);
+  //update attribute to enable saving
+  r.el.setAttribute('l',data.v.l);
+  r.el.setAttribute('cat',data.v.cat);
+  r.el.setAttribute('we',data.v.we);
+  r.el.setAttribute('wi',data.v.wi);
+  r.el.setAttribute('wm',data.v.wm);
   //replaceChild(newChild, oldChild)
   //r.bc.parentElement.replaceChild(bc,r.bc);
   //
