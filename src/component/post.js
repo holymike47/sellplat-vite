@@ -530,7 +530,7 @@ async getMenuTemplate(slug,clasz=[]){
     `
     <div class="container-fluid">
     <a class="${this.main.pbu.showIf(this.main.cache.option.logoUrl)} sp-detail sp-slug-link me-2" data-slug="home" href="/${this.state.username}"><img width="60" height="60" src="${this.main.cache.option.logoUrl}" /></a>
-    <a class="sp-site-title sp-detail sp-slug-link" data-slug="home" href="/${this.state.username}">${this.main.cache.option.siteName}</a>
+    <a class="nav-link sp-site-title sp-detail sp-slug-link" data-slug="home" href="/${this.state.username}">${this.main.cache.option.siteName}</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>

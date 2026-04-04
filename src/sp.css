@@ -37,12 +37,12 @@ a:hover,.sp-link:hover{
   color:var(--sp-primary-hover);
 }
 
-.sp-btn,.btn-primary{
+.sp-btn,.btn-primary,button{
   color:white;
   background:var(--sp-primary);
 }
 
-.btn-primary:hover,.sp-btn:hover{
+.btn-primary:hover,.sp-btn:hover,button:hover{
   color:white;
   background:var(--sp-primary-hover);
 }

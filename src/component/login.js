@@ -34,7 +34,7 @@ this.loginComponent.innerHTML =
    </section>
 
     <section class="auth-token d-none">
-    div class="sp-form-control mb-2">
+    <div class="sp-form-control mb-2">
     <input type="text" class="form-control auth-token">
     </div>
     <button class="btn btn-primary w-100 py-2 auth-token" type="button">Verify</button>
