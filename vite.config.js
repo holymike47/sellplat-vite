@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   build: {
-    emptyOutDir: true
+    emptyOutDir: true,
+    sourcemap:true
   }
 })
