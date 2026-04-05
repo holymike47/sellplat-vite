@@ -1909,12 +1909,15 @@ controls.appendChild(this.getFormControl());
 //section for message ie textarea
 let div2 = 
 `
-<div class="${this.blockMargin}">
-<label for="sp-form-message">Message</label>
-<textarea id="sp-form-message" rows="3" class="form-control sp-form-message sp-validation-required"></textarea>
+<div class="sp-form-control ${this.blockMargin}">
+<label for="sp-form-message" class="sp-form-title">Message</label>
+<textarea id="sp-form-message" rows="3" class="sp-form-control form-control sp-form-message sp-validation-required"></textarea>
 </div>
-<button type="button" class="btn sp-form-submit-button">Submit</button>
-<a type="button" class="${this.main.pbu.showIf(!this.isView)} sp-form-add-field btn btn-sm float-end">+ Add Field</a>
+
+<div>
+<button type="button" class="btn btn-primary sp-form-submit-button">Submit</button>
+<div>
+<a type="button" class="${this.main.pbu.showIf(!this.isView)} sp-form-add-field btn btn-primary btn-sm float-end">+ Add Field</a>
 `;
 this.main.pbu.appendChild(r.el,div2);
 //

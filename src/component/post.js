@@ -714,11 +714,28 @@ let iti = this.main.intlTelInput(pf, {
 
 
 let submitButton = form.querySelector('.sp-form-submit-button');
-this.main.pbu.listen(submitButton,'click',()=>{
-    let controls = form.querySelectorAll('input.sp-form-control')||[];
+this.main.pbu.listen(submitButton,'click',async ()=>{
+    let controls = form.querySelectorAll('.sp-form-control:not(div)')||[];
     if(controls.length>0){
         if(!this.main.vu.validate(controls)){
         return;
+    }
+    let title,value;
+    let message = "";
+    for(let c of controls){
+        title = c.closest('div.sp-form-control').querySelector('.sp-form-title').textContent;
+        value = c.value;
+        message += `\n${title}:${value}`;
+    }
+    console.log(message);
+    let state = this.main.utils.clone(this.state);
+    state.link = this.main.fu.getApi(state.username,false)+ '/submit-contact-form';
+    state.body = JSON.stringify(message);
+    let r = await this.main.fu.fetch(state);
+    if(r && r.id==200){
+        this.main.pbu.appendChild(submitButton.parentElement,
+    `<p class="border border-success mt-2 p-2">Thank you for your message. We will get back to you shortly</p>`);
+    submitButton.setAttribute("disabled","disabled");
     }
 }
 })

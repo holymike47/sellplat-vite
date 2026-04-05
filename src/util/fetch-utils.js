@@ -105,7 +105,7 @@ url = apiBase + username + "/admin";
 }
 else{
     if(username){
-        url = apiBase + username
+        url = apiBase + username;
     }else{
         url = apiBase;
     }
