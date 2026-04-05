@@ -44,16 +44,11 @@ return valid;
  */
 required(el){
 let valid = true;
-let isText = el.type=='text' || el.type=='password';
+//let isText = el.type=='text' || el.type=='password';
 if(!el.value){
 valid = false;
 }
-let message;
-if(isText){
-message = `${el.name?el.name:'This field'} is required`;
-}else{
-message = `Please enter a valid ${el.type}`;
-}
+let message = `${el.name?el.name:'This field'} is required`;
 this.finalize(el,valid,message);
 return valid;
 }//func

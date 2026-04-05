@@ -93,7 +93,7 @@ password:this.passwordControl.value
 this.tenant = tenant;
 console.log(this.tenant);
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(undefined,false)+ 'exists';
+state.link = this.main.fu.getApi(undefined,false,'exists');
 state.body = tenant.email;
 //dont springify a single value like email else extra double quote will be added
 let r = await this.main.fu.fetch(state);
@@ -136,7 +136,7 @@ this.formTitle.textContent = 'Wrong, please try again';
 
 async register(){
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(undefined,false)+ 'register';
+state.link = this.main.fu.getApi(undefined,false,'register');
 state.body = JSON.stringify(this.tenant);
 let r = await this.main.fu.fetch(state);
 if(r){

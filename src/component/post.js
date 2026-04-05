@@ -729,7 +729,7 @@ this.main.pbu.listen(submitButton,'click',async ()=>{
     }
     console.log(message);
     let state = this.main.utils.clone(this.state);
-    state.link = this.main.fu.getApi(state.username,false)+ '/submit-contact-form';
+    state.link = this.main.fu.getApi(state.username,false,'submit-contact-form');
     state.body = JSON.stringify(message);
     let r = await this.main.fu.fetch(state);
     if(r && r.id==200){

@@ -79,7 +79,7 @@ password:password,
 };
 this.user = user;
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(undefined,false)+ 'login';
+state.link = this.main.fu.getApi(undefined,false,'login');
 state.body = JSON.stringify(this.user);
 let r = await this.main.fu.fetch(state);
 if(r){
@@ -90,20 +90,24 @@ if(this.state.nextState && this.cache.stateObject){
 console.log("this.cache");
 console.log(this.cache);
 this.username = this.cache.tenant.username;
-this.sendAuthToken();
-}
-}//func
-
-sendAuthToken(){
-let authToken= "1234";
-//send()
+//
+this.authToken = this.cache.token;
 this.loginSection.remove();
 this.main.pbu.show(this.authTokenSection);
 this.formTitle.textContent="Please enter the token sent to you";
-return true;
+}
 }//func
+
+// sendAuthToken(){
+// let authToken= "1234";
+// //send()
+// this.loginSection.remove();
+// this.main.pbu.show(this.authTokenSection);
+// this.formTitle.textContent="Please enter the token sent to you";
+// return true;
+// }//func
 verifyAuthToken(){
-  if(this.authTokenControl.value == ''){
+  if(this.authTokenControl.value == this.authToken){
     //normalize tenantId
     this.cache.tenant.tenantId = this.cache.tenant.id;
     this.main.cache = this.cache;
@@ -124,7 +128,7 @@ verifyAuthToken(){
                 username:this.username,
                 url:`/app/${this.username}/dashboard/page/detail/0`,
                 isAdmin:true,
-                }
+                };
                 this.main.navigate(dashboardState);
                   }
   }

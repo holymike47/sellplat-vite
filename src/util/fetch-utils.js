@@ -95,20 +95,28 @@ else{
  * 
  * @param {string} username 
  * @param {boolean} admin 
+ * @param {string} path; 
  * @returns 
  */
-getApi(username,admin){
+getApi(username,admin,path){
 let apiBase = this.main.config.BASE_URL;
 let url;
 if(admin){
-url = apiBase + username + "/admin";
+url = apiBase + '/' + username + "/admin";
 }
 else{
     if(username){
-        url = apiBase + username;
+        url = apiBase + '/' + username;
     }else{
         url = apiBase;
     }
+}
+
+if(path){
+    if(! path.startsWith('/')){
+        path = '/' + path;
+    }
+    url = url + path;
 }
 return url;
 }//
