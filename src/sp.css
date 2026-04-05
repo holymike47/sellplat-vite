@@ -48,6 +48,12 @@ a:hover,.sp-link:hover{
   background:var(--sp-primary-hover);
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background:var(--sp-primary-hover);
+}
+
 
 
 .dragging {

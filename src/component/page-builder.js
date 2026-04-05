@@ -1956,7 +1956,7 @@ let type = (data?.type)?data?.type:'text';
 let row = this.main.pbu.createElement('div',['row']);
 row.innerHTML = 
 `
-<div class ="col-8">
+<div class ="${this.main.pbu.addClassIf(this.isView,['col-12'],['col-8'])}">
 <div class="${this.blockMargin} sp-form-control">
 <label data-type="${type}" ${this.main.pbu.setAttributeIf(!this.isView,[{n:"contenteditable",v:"plaintext-only"}])} class="sp-form-title form-label">${data.title?data.title:'Title'}</label>
 <input type="${type}" class="sp-form-control form-control ${this.main.pbu.addClassIf(required,['sp-validation-required'])}"/>
