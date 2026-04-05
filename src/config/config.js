@@ -2,6 +2,7 @@ export const config={
   NAME:"Sellplat",
   BASE_URL:import.meta.env.VITE_API_URL,
   HOSTNAME:"http://localhost:5173",
+  RESERVED_TITLES:["home","blog"],
   SPLITTER:"|*|",
   SPLITTER2:"|**|",
   SITE_LANGUAGE: ["English","French"],

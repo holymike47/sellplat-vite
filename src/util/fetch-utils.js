@@ -78,10 +78,6 @@ for(let n of notifications){
 //NOW PROCESS RESULT
 console.log(responseJson);
 if(typeof responseJson=='object' && ('errorMessage' in responseJson && !this.main.utils.isNull(responseJson.errorMessage))){
-            if(state.isRoot){
-                //if dev instead;
-            console.log(responseJson.errorMessage);
-        }
    this.main.handleError(responseJson,state);
    return false;
 }//

@@ -14,7 +14,6 @@ this.main = main;//used when using this component to create another
 this.state = state;
 
 //let controller = new AbortController();
-/**@type {boolean}*/this.isRoot = true;
 //
 /**@type {any|null}*/this.postDto = null;
 /**@type {any|null}*/this.postViewDto = null;
@@ -161,6 +160,7 @@ this.addViewEvents();
  * @param {any} error the spResponse object, contains message - for client, errorMessage for root
  */
 async get404Page(error){
+//if error is init ie first visit, no postDetail, so show error in body
 let mainContent = this.postDetailSection?.querySelector('main#mainContent') || this.main.pbu.query('body');
 mainContent.innerHTML = 
 `
@@ -168,9 +168,9 @@ mainContent.innerHTML =
 <h1>404</h1>
 <h2 class="d-none">Page Not Found</h2>
 <h2>${error.message}</h2>
-<p class="text-danger ${this.main.pbu.showIf(this.isRoot)}">${error.errorMessage}</p>
+<p class="text-danger ${this.main.pbu.showIf(import.meta.env.MODE=='development')}">${error.errorMessage}</p>
 </div>
-`;
+`; 
 }//func
 
    
@@ -184,7 +184,7 @@ this.main.pbu.appendChild(this.postFormSection,
 <section>
 <div class="container">
 <header class="my-2">
-<a type="button" href="/app/${this.state.username}/post/${this.state.postType}/new/-1" class="btn new-post sp-link sp-admin-link sp-route-link">Add ${this.state.postType} </a> 
+<a type="button" href="/app/${this.state.username}/post/${this.state.postType}/new/-1" class="btn btn-primary new-post sp-link sp-admin-link sp-route-link">Add ${this.state.postType} </a> 
 </header>
 
 <div class="filter filter-by-status w-25">
@@ -205,7 +205,7 @@ this.main.pbu.appendChild(this.postFormSection,
 <input class="form-control search-term" placeholder="search">
 </div>
 <div class="col-auto">
-<button id="searchPostsButton" type="button" class="btn mb-3">Search</button>
+<button id="searchPostsButton" type="button" class="btn btn-primary mb-3">Search</button>
 </div>
 </form>
 </div>
@@ -563,8 +563,11 @@ let url,state;
 for(let m of menuItems){
     let children = m.children;
     let isCustom = m.postType=='custom';
+    let isHome = m.title.toLowerCase()=='home';
       if(isCustom){
         url = m.link;
+      }else if(isHome){
+        url = `/${this.state.username}`;
       }else{
         state = this.main.getHomeState(this.state.username,m.title,m.postId);
         url = state.url;
@@ -572,7 +575,7 @@ for(let m of menuItems){
         if(children.length==0){
         navItem = this.main.pbu.createElement('li',['nav-item']);
         menuUl.appendChild(navItem);
-        navLink = `<a href="${url}" class="sp-nav-link nav-link ${isCustom?'':'sp-detail'}">${m.title}</a>`;
+        navLink = `<a href="${url}" class="sp-nav-link nav-link ${this.main.pbu.addClassIf(isHome,['sp-slug-link'])} ${this.main.pbu.addClassIf(!isCustom,['sp-detail'])}">${m.title}</a>`;
         this.main.pbu.appendChild(navItem,navLink);
     }else{
     //child menu
@@ -583,15 +586,18 @@ for(let m of menuItems){
     this.main.pbu.appendChild(navItem,navLink,subMenuUl);
     for(let c of children){
         isCustom = c.postType=='custom';
+        isHome = m.title.toLowerCase()=='home';
         if(isCustom){
         url = c.link;
+      }else if(isHome){
+        url = `/${this.state.username}`;
       }else{
         state = this.main.getHomeState(this.state.username,c.title,c.postId);
         url = state.url;
       }
         navItem = this.main.pbu.createElement('li',['nav-item']);
         subMenuUl.appendChild(navItem);
-        navLink = `<a href="${url}" class="sp-nav-link nav-link ${isCustom?'':'sp-detail'}">${c.title}</a>`;
+        navLink = `<a href="${url}" class="sp-nav-link nav-link ${this.main.pbu.addClassIf(isHome,['sp-slug-link'])} ${this.main.pbu.addClassIf(!isCustom,['sp-detail'])}">${c.title}</a>`;
         this.main.pbu.appendChild(navItem,navLink);
     }
     }
@@ -963,6 +969,10 @@ if(!this.main.vu.required(this.postTitleControl)){
     return;
 }
 let title = this.postTitleControl.value;
+if(this.state.postType=='page' && this.state.type=='new' && this.main.config.RESERVED_TITLES.includes(title.toLowerCase())){
+    this.main.utils.notify('This title is reserved',1,'d');
+    return;
+}
 //process category
 let categoryTitle,categoryId;
 if(this.state.postType!='page'){

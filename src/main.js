@@ -232,6 +232,9 @@ console.error(`#Code: ${state.err.code} #Message: ${state.err.message} #detailed
  * @param {any} state
  */
 handleError(responseJson,state){
+  if(import.meta.env.MODE=='development'){
+    console.error(responseJson.errorMessage);
+  }
 switch (Number(responseJson.id)){
                 case 401:
                     //Unauthorized

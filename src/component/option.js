@@ -42,7 +42,7 @@ this.main.pbu.createCheckedInputElement({id:"activeTheme",title:"Theme",value:o.
 </div>
 </div> 
 `,
-`<button id="saveButton" type="button" class="btn float-end">Save</button>`,
+`<button id="saveButton" type="button" class="btn btn-primary float-end">Save</button>`,
 );
 //handle
 this.siteNameControl=this.optionSection.querySelector('#siteName');//<input>
