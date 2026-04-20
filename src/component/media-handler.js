@@ -28,9 +28,10 @@ div.innerHTML =
 <div class='sp-placeholder'>
 <p class="small"><i class="bi bi-image mx-2"></i>Upload image or insert an image URL</p>
 <input class="d-none sp-input" type="file" accept="image/*">
-<button class="btn btn-sm upload-image m-2" type="button">${(data.src)?'Update': 'Upload'}</button>
-<button class="btn btn-sm insert-image m-2" type="button">Insert Link</button>
-<button class="btn btn-sm select-icon m-2" type="button">Add Icon</button>
+<button class="btn btn-sm btn-primary original-image d-none m-2" type="button"><i class="bi bi-image mx-2"></i>Original</button>
+<button class="btn btn-sm btn-primary upload-image m-2" type="button">Upload</button>
+<button class="btn btn-sm btn-primary insert-image m-2" type="button">Insert Link</button>
+<button class="btn btn-sm btn-primary select-icon m-2" type="button">Add Icon</button>
 <i class="sp-remove d-none bi bi-trash m-2" style="color: #FF0000;"></i>
 </div>
 `;
@@ -42,6 +43,7 @@ let icon =div.querySelector('i.main-icon');
 let iconClass = ['bi','main-icon','fs-1','mb-4'];
 /**@type {HTMLDivElement} */let placeholdersection = div.querySelector('.sp-placeholder');
 let input = div.querySelector('.sp-input');
+let originalImageButton = div.querySelector('.original-image');
 let uploadButton = div.querySelector('.upload-image');
 let insertImageLinkButton = div.querySelector('.insert-image');
 let selectIconButton = div.querySelector('.select-icon');
@@ -77,6 +79,7 @@ let template = {
 div:div,
 input:input,
 uploadButton:uploadButton,
+originalButton:originalImageButton,
 insertButton:insertImageLinkButton,
 insertIcon:selectIconButton,
 icon:icon,
@@ -88,6 +91,11 @@ placeholdersection:placeholdersection
 };
 //add events
 //########## IMAGE ##############
+this.main.pbu.listen(originalImageButton,'click',()=>{
+    image.src = data.src;
+    this.main.pbu.hide(originalImageButton);
+});
+//
 this.main.pbu.listen(uploadButton,'click',()=>input.click());
 //
 this.main.pbu.listen(insertImageLinkButton,'click',(e)=>{
@@ -323,6 +331,7 @@ $this.main.pbu.hide(icon);
 handleImage(template){
 let input = template.input;
 let image = template.image;
+let originalImageSrc = image.src;
 let uploadButton = template.uploadButton;
 let insertButton = template.insertButton;
 let remove = template.remove;
@@ -336,11 +345,15 @@ const reader = new FileReader();
 reader.onload = async function(e) {
 image.src = e.target.result;
 if(image.src){
-uploadButton.textContent = 'Update';
+uploadButton.textContent = 'Change';
 }else{
 $this.main.pbu.hide(image);
 $this.main.pbu.hide(remove);
 uploadButton.textContent = 'Upload';
+}
+//
+if(originalImageSrc && originalImageSrc.startsWith('https')){
+    $this.main.pbu.show(template.originalButton);
 }
 }
 reader.readAsDataURL(file);
@@ -453,4 +466,125 @@ reader.readAsDataURL(file);
 }
 }//func
 
+/**
+ * 
+ * @param {any} imageTemplate 
+ */
+async uploadToServer(imageTemplate){
+let image = imageTemplate.querySelector('.main-image');
+let input = imageTemplate.querySelector('.sp-input');
+//let src = imageTemplate.image.src;
+if(image.src?.startsWith('data:image')){
+//firstly, get upload link
+let state = this.main.utils.clone(this.main.state);
+state.link = this.main.fu.getApi(state.username,true,'token');
+let data = {
+"type":"cloudflare",
+"job":"uploadLink"
+};
+state.body = JSON.stringify(data);
+let r = await this.main.fu.fetch(state);
+console.log(r);
+if(r){
+//now we have the link, upload
+let file = input.files[0];
+let formData = new FormData();
+formData.append("file", file);
+let data = {
+link:r.result.uploadURL,
+body:formData
+};
+r = await this.main.fu.fetchExt(data);
+if(r){
+    image.src = this.main.mh.getImageUrl(r.result.id,'public');
+    return r.result.id;
+}else{
+this.main.utils.notify("Error uploading image",2,'m');
+throw new Error();
+}
+}
+}else if(image.src?.includes('imagedelivery')){
+    let paths = image.src.split('/');
+    return paths[4];
+}else{
+    return false;
+}
+}//func
+
+/**
+ * 
+ * @param {File} file 
+ */
+async uploadToServerbk(file){
+let state = this.main.utils.clone(this.main.state);
+//state.link = this.main.fu.getApi(state.username,true,'token',[{n:'type',v:'cloudflare'},{n:'oldImageId',v:oldImageId?oldImageId:""}]);
+state.link = this.main.fu.getApi(state.username,true,'token');
+let input = {
+"type":"cloudflare",
+"job":"uploadLink"
+};
+state.body = JSON.stringify(input);
+let r = await this.main.fu.fetch(state);
+console.log(r);
+if(r){
+let formData = new FormData();
+formData.append("file", file);
+let data = {
+link:r.result.uploadURL,
+body:formData
+};
+r = await this.main.fu.fetchExt(data);
+if(r){
+    return r.result;
+}
+}//
+}//func
+
+/**
+ * 
+ * @param {any} data
+ * @returns 
+ */
+async deleteFromServer(data){
+let state = this.main.utils.clone(this.main.state);
+let imageIds = [];
+if(data.imageIds){
+imageIds = [...data.imageIds];
+}else if(data.items){
+
+    for(let i of data.items){
+            if(i.featuredImageUrl){
+                imageIds.push(i.featuredImageUrl);
+            }
+        }
+
+// switch(state.component){
+//     case 'category':
+//         break;
+//     case 'post':
+//         break;
+// }
+}
+
+if(imageIds.length>0){
+state.link = this.main.fu.getApi(state.username,true,'token');
+let input = {
+"type":"cloudflare",
+"job":"delete",
+"imageIds":imageIds
+};
+state.body = JSON.stringify(input);
+this.main.fu.fetch(state);
+}
+}//func
+
+/**
+ * 
+ * @param {string} imageId 
+ * @param {string} variant 
+ * @returns 
+ */
+getImageUrl(imageId,variant){
+return this.main.config.IMG_DELIVERY + `/${imageId}/${variant}`;
+}//func
 }//class

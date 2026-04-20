@@ -1,3 +1,5 @@
+import { th } from "intl-tel-input/i18n";
+
 // @ts-check
 export class Login{
 /**
@@ -12,8 +14,7 @@ this.state = state;
 this.title = "login";
 this.user={};
 /**@type {string}*/this.username='';
-this.cache = null;
-//this.loginViewInitialized = false;
+//this.cache = null;
 this.getTemplate();
 }//
 
@@ -26,7 +27,7 @@ this.loginComponent.innerHTML =
   <form>
   
     <img class="mb-4" src="/cc_logo_trans.png" alt="" width="72" height="57">
-    <h1 class="h3 mb-3 fw-normal login">Please sign in</h1>
+    <h3 class="h3 mb-3 fw-normal login">Please sign in</h3>
       <section class='login'>
      ${this.main.pbu.createFormControl({serialize:true,id:'email',title:"Email",name:'Email'})}
     ${this.main.pbu.createFormControl({serialize:true,id:'password',title:"Password",name:'Password',type:'password'})}
@@ -43,7 +44,7 @@ this.loginComponent.innerHTML =
 `;
 this.main.pbu.mount(this.loginComponent);
 //
-this.formTitle = this.loginComponent.querySelector('h1.login');
+this.formTitle = this.loginComponent.querySelector('h3.login');
 this.loginSection = this.loginComponent.querySelector('section.login');
 this.emailControl = this.loginComponent.querySelector('input#email');
 this.passwordControl = this.loginComponent.querySelector('input#password');
@@ -66,16 +67,18 @@ $this.main.pbu.listen($this.authTokenButton,'click',()=>{
 }//inner
 }//func
 
+
 async submit(){
-  //validate
 if(! this.main.vu.validate(this.emailControl,this.passwordControl)){
     return;
 }
 let email = this.emailControl.value;
 let password = this.passwordControl.value;
+
 let user = {
 email:email,
 password:password,
+clientUUID:this.main.utils.getUUID()
 };
 this.user = user;
 let state = this.main.utils.clone(this.state);
@@ -83,46 +86,35 @@ state.link = this.main.fu.getApi(undefined,false,'login');
 state.body = JSON.stringify(this.user);
 let r = await this.main.fu.fetch(state);
 if(r){
-this.cache=r;
-if(this.state.nextState && this.cache.stateObject){
-  this.state.nextState.stateObject= this.cache.stateObject.body;
+  console.log("response");
+  console.log(r);
+   this.authToken = r.token;
+if(this.state.nextState){
+  this.state.nextState.stateObject= r.stateObject;
+}else{
+console.log("main before");
+console.log(this.main);
+this.main.cache = r;
+console.log("main after");
+console.log(this.main);
+this.username = this.main.cache.tenant.username;
 }
-console.log("this.cache");
-console.log(this.cache);
-this.username = this.cache.tenant.username;
-//
-this.authToken = this.cache.token;
 this.loginSection.remove();
 this.main.pbu.show(this.authTokenSection);
 this.formTitle.textContent="Please enter the token sent to you";
 }
 }//func
 
-// sendAuthToken(){
-// let authToken= "1234";
-// //send()
-// this.loginSection.remove();
-// this.main.pbu.show(this.authTokenSection);
-// this.formTitle.textContent="Please enter the token sent to you";
-// return true;
-// }//func
+
 verifyAuthToken(){
   if(this.authTokenControl.value == this.authToken){
-    //normalize tenantId
-    this.cache.tenant.tenantId = this.cache.tenant.id;
-    this.main.cache = this.cache;
-    this.main.setTheme(this.cache.option.activeTheme);
-    //settheme
-    console.log('this.cache');
-    console.log(this.cache);
     //display link of dashboard
     if(this.state.nextState){
-      if(('errorMessage' in this.state.nextState.stateObject && !this.main.utils.isNull(this.state.nextState.stateObject.errorMessage))){
-            this.main.utils.notify(this.state.nextState.stateObject.message,1,'m');
-      }else{
-        this.main.navigate(this.state.nextState);
-      }
+     this.main.navigate(this.state.nextState);
     }else{
+      //normalize tenantId
+    this.main.cache.tenant.tenantId = this.main.cache.tenant.id;
+    this.main.setTheme(this.main.cache.option.activeTheme);
             let dashboardState = {
                 component:'dashboard',
                 username:this.username,

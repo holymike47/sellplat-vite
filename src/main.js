@@ -33,6 +33,7 @@ this.pb.isView = true;
 this.mh = new MediaHandler(this);
 this.state = null;
 this.cache = {};//important
+this.viewCache = {};//
 this.posts$ = null;
 this.categories$ = null;
 this.categoryTitles = null;
@@ -110,7 +111,7 @@ this.navigate(homeState);
  * @param {string} pathname 
  * @param {boolean} isInit
  */
-handleAdmin(pathname,isInit){
+handleAdmin2(pathname,isInit){
 let paths = pathname.split('/');
 let loginState = {component:'login',url:'/app/login',isInit:isInit};
   if(paths.length==2){
@@ -125,9 +126,57 @@ let loginState = {component:'login',url:'/app/login',isInit:isInit};
   }else if(paths.length==7){
     //note: admin link starts with app so lenght is 6 as opposed to normal view which is 5
 let nextState = this.getState(pathname,true);
-nextState.isInit = isInit;
+if(this.spSid && this.spStp){
+  //there may be a browser refresh
+nextState.isInit = false;
+this.navigate(nextState);
+}else{
 loginState.nextState = nextState;
 this.navigate(loginState);
+}
+  }else{
+    //not found or home or login
+    alert('handleAdmin: not found');
+  }
+}//
+
+/**
+ * 
+ * @param {string} pathname 
+ * @param {boolean} isInit
+ */
+handleAdmin(pathname,isInit){
+let paths = pathname.split('/');
+let loginState = {component:'login',url:'/app/login',isInit:isInit};
+  if(paths.length==2){
+    //ie. selplat.io/app
+    this.navigate(loginState);
+  }
+  // dashboard/admin
+  else if(paths.length==3){
+    //eg: app/login or app/register
+  let component = paths[2];
+  this.navigate({component:component,url:`/app/${component}`,isInit:isInit});
+  }else if(paths.length==7){
+    //recalculate uuid and set on request
+    //note: admin link starts with app so lenght is 6 as opposed to normal view which is 5
+let nextState = this.getState(pathname,true);
+this.navigate(nextState);
+// nextState.uuid = this.utils.getUUID();
+// //loginState.nextState = nextState;
+// let login = new Login(this,nextState);
+// login.loginSession();
+//getSession(this.utils.getUUID());
+// if(session.spSid && session.spStp){
+//   this.navigate(nextState);
+// }else{
+//   loginState.nextState = nextState;
+//   this.navigate(loginState);
+// }
+
+//nextState.uuid = this.utils.getUUID();
+//loginState.nextState = nextState;
+//this.navigate(nextState);
   }else{
     //not found or home or login
     alert('handleAdmin: not found');
@@ -253,7 +302,7 @@ switch (Number(responseJson.id)){
                 case 805:
                     //Session timedout
                     let loginState = {component:'login',url:'/app/login',nextState:state};
-                    this.navigate(loginState );
+                    this.navigate(loginState);
                     this.utils.notify(responseJson.message,1,'m');
                     break;
                 case 806:
@@ -267,6 +316,7 @@ switch (Number(responseJson.id)){
                 default:
                     this.utils.notify(responseJson.message,2,'m');
             }//
+            throw new Error();
 }//func
 
 /**
@@ -385,9 +435,6 @@ isAdmin:false,
 isRoot:false,
 nextState:null
 };
-}
-if(state.username=='sp'){
-  state.isRoot = true;
 }
 return state;
 }//func

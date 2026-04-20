@@ -117,7 +117,7 @@ addEvents();
 return this.pbComponent;
 
 function addEvents(){
-$this.main.pbu.listen($this.publishButton,'click',()=>$this.save());
+$this.main.pbu.listen($this.publishButton,'click',async ()=>await $this.save());
 //entry point
 $this.main.pbu.listen($this.addRowButton,'click',()=>{
 $this.addRow();//
@@ -523,7 +523,7 @@ col.appendChild($this.getBlockMenu());
 }//func
 
 //######### INITIAL ##########
-save(){
+async save(){
 let result = {
     r:[]
 };
@@ -605,8 +605,10 @@ li:inputs
 };
 break;
 case 'image':
+let imageTemplate = el.querySelector('.image-template');
+let imageId = await this.main.mh.uploadToServer(imageTemplate);
 m.v={
-src:el.querySelector('.main-image')?.src
+src:imageId
 };
 break;
 case 'form':

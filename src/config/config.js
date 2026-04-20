@@ -1,6 +1,7 @@
 export const config={
   NAME:"Sellplat",
   BASE_URL:import.meta.env.VITE_API_URL,
+  IMG_DELIVERY:"https://imagedelivery.net/K6bNIi4XITxUPMPcb-sFlw",
   HOSTNAME:"http://localhost:5173",
   RESERVED_TITLES:["home","blog"],
   SPLITTER:"|*|",

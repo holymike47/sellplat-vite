@@ -1,6 +1,7 @@
 // @ts-check
 import { config } from "../config/config";
 import { PbUtils } from "./pb-utils";
+
 export class Utils {
 /**
  * 
@@ -10,7 +11,43 @@ constructor(main) {
 this.main = main;
 this.config = config;
 this.pbu = new PbUtils(null);
+}//
+
+/**
+ * 
+ * @param {any} item 
+ */
+sign(item){
+console.log("main in sign");
+console.log(this.main);
+item.username= this.main.cache.tenant.username;
+item.tenantId=this.main.cache.tenant.tenantId;
+item.tenantUuid=this.main.cache.tenant.tenantUuid;
 }
+getUUID(){
+return crypto.randomUUID();
+// const components = [];
+    
+//     // User agent
+//     components.push(navigator.userAgent);
+    
+//     // Screen resolution
+//     components.push(`${screen.width}x${screen.height}`);
+    
+//     // Timezone
+//     components.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    
+//     // Language
+//     components.push(navigator.language);
+    
+//     // Canvas fingerprinting
+//     components.push(await getCanvasFingerprint());
+    
+//     // WebGL fingerprint
+//     components.push(await getWebGLFingerprint());
+    
+//     return CryptoJS.SHA256(components.join('|')).toString();
+}//
 
 /**
  * 
@@ -327,4 +364,6 @@ return id;
 pop(element,array){
 this.deleteItem(element,array)
 }//func
+
+
 }//class

@@ -10,14 +10,11 @@ constructor(main,state){
 this.main = main;
 this.state = state;
 //
-/**@type {boolean}*/this.isRoot = true;
 /**@type {boolean}*/this.isPartial = false;//when using isPartial
 /**@type {any|null}*/this.category$=null;
 /**@type {any[]|null}*/this.categories$=null;
 /**@type {any[]}*/this.displayCategories = [];
 /**@type {string[]}*/this.parentCategoryTitles = [];//for creating new category and assigning parent
-
-this.mediaHandler = new MediaHandler(main);
 this.title = "category";
 }//
 
@@ -92,34 +89,31 @@ this.categorySection= this.main.pbu.createElement('main',['category']);
 this.main.pbu.appendChild(this.categorySection,
 `
 <section">
-<form name="categoryForm" id="categoryForm">
-${this.main.pbu.createFormControl({id:"title",title:"Title",value:c.title})}
-${this.main.pbu.createFormControl({id:"description",title:"Description",value:c.description})}
-`,
-this.main.pbu.createSelectElement({id:"parentTitle",title:"Parent",value:c.parentTitle,items:['None',...this.parentCategoryTitles]}),
-
-`
+<form name="categoryForm" id="categoryForm" class="w-50 m-auto">
+${this.main.pbu.createFormControl({title:"Title",value:c.title,clasz:['title'],serialize:true})}
+${this.main.pbu.createFormControl({title:"Description",value:c.description,clasz:['description'],serialize:true})}
+${this.main.pbu.createSelectElement({title:"Parent",value:c.parentTitle,clasz:['parent'],items:['None',...this.parentCategoryTitles],serialize:true})}
 <div class="mb-3 row">
-<label for="categoryImageDiv" class="col-sm-2 col-form-label">Image  </label>
+<label for="categoryImageDiv" class="col-sm-2 col-form-label">Image </label>
 <div class="col-sm-10" id="categoryImageDiv">
 
 </div>
 </div>
 
-<button type="button" id="saveCategoryButton"  class="btn float-start">Save</button>
+<button type="button" id="saveCategoryButton"  class="btn btn-primary float-start">Save</button>
 </form>
 </section>
 `
 );
 
-this.categoryTitleControl = this.categorySection.querySelector('#title');
-this.categoryDescriptionControl = this.categorySection.querySelector('#description');
-this.categoryParentSelector = this.categorySection.querySelector('#parentTitle');//<select>
+this.categoryTitleControl = this.categorySection.querySelector('input.title');
+this.categoryDescriptionControl = this.categorySection.querySelector('input.description');
+this.categoryParentSelector = this.categorySection.querySelector('select.parent');//<select>
 //image
 this.categoryImageDiv = this.categorySection.querySelector('#categoryImageDiv');
-this.categoryImageTemplate = this.mediaHandler.getImageTemplate({src:c.featuredImageUrl,width:"72", height:"57"});
-this.categoryImageTemplate.insertIcon.remove();
-this.main.pbu.replace(this.categoryImageDiv,this.categoryImageTemplate.div);
+this.featuredImageTemplate = this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(c.featuredImageUrl,'public')});
+this.featuredImageTemplate.insertIcon.remove();
+this.main.pbu.replace(this.categoryImageDiv,this.featuredImageTemplate.div);
 //
 this.saveCategoryButton=this.categorySection.querySelector('#saveCategoryButton');
 //
@@ -173,6 +167,15 @@ if(!this.main.vu.required(this.categoryTitleControl)){
 let title = this.categoryTitleControl.value;
 let parentTitle = this.categoryParentSelector.value;
 let parentId = this.main.utils.getItemIdFromTitle(parentTitle,this.categories$) || -1;
+//
+let oldImageId;
+let newImageId = await this.main.mh.uploadToServer(this.categoryImageDiv.querySelector('div.image-template'));
+if(newImageId && newImageId !=this.category$.featuredImageUrl){
+   if(this.category$.featuredImageUrl){
+    oldImageId = this.main.utils.clone(this.category$.featuredImageUrl);
+    }
+    this.category$.featuredImageUrl = newImageId; 
+}
 
 let category ={
 id:this.category$.id,
@@ -180,7 +183,7 @@ title:title,
 slug:title.toLowerCase(),
 description:this.categoryDescriptionControl.value,
 postType:this.state.postType,
-featuredImageUrl:this.categoryImageTemplate.image.src,
+featuredImageUrl:this.category$.featuredImageUrl,
 postIds:[],
 parentTitle:parentTitle,
 parentId:parentId,
@@ -196,6 +199,9 @@ state.body = JSON.stringify(category);
 let r = await this.main.fu.fetch(state);
 if(r>0){
     this.main.utils.notify('Saved',0,'s');
+if(oldImageId){
+this.main.mh.deleteFromServer({imageIds:[oldImageId]});
+}
     if(this.isPartial){
         category.id = r;
         return category;

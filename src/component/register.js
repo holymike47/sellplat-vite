@@ -24,7 +24,7 @@ this.registerComponent.innerHTML =
   <form>
   
     <img class="mb-4" src="/cc_logo_trans.png" alt="" width="72" height="57">
-    <h1 class="h3 mb-3 fw-normal login">Register</h1>
+    <h3 class="h3 mb-3 fw-normal login">Register</h3>
       <section class='login'>
      ${this.main.pbu.createFormControl({serialize:true,id:'email',title:"Email",name:'Email'})}
     ${this.main.pbu.createFormControl({serialize:true,id:'password',title:"Password",name:'Password',type:'password'})}
@@ -45,7 +45,7 @@ this.registerComponent.innerHTML =
 `;
 this.main.pbu.mount(this.registerComponent);
 //
-this.formTitle = this.registerComponent.querySelector('h1.login');
+this.formTitle = this.registerComponent.querySelector('h3.login');
 this.loginSection = this.registerComponent.querySelector('section.login');
 this.emailControl = this.registerComponent.querySelector('input#email');
 this.passwordControl = this.registerComponent.querySelector('input#password');
@@ -98,28 +98,13 @@ state.body = tenant.email;
 //dont springify a single value like email else extra double quote will be added
 let r = await this.main.fu.fetch(state);
 if(r){
-this.authToken= r.message;
+this.authToken= r;
 this.loginSection.remove();
 this.main.pbu.show(this.authTokenSection);
 this.formTitle.textContent="Please enter the token sent to you";
 }
-// if(r.message=='Ok'){
-// await this.sendAuthToken();
-// }
 }//
 
-// async sendAuthToken(){
-// let state = this.main.utils.clone(this.state);
-// state.link = this.main.fu.getApi(undefined,false)+ 'token';
-// state.body = this.tenant.email;
-// let r = await this.main.fu.fetch(state);
-// if(r){
-// this.authToken= r;
-// this.loginSection.remove();
-// this.main.pbu.show(this.authTokenSection);
-// this.formTitle.textContent="Please enter the token sent to you";
-// }
-// }//
 
 verifyAuthToken(){
 if(this.authTokenControl.value == this.authToken){

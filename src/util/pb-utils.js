@@ -143,7 +143,7 @@ section.innerHTML =
        <tbody class="mass-action sp-tb">
        </tbody>
      </table>
-     <button id="massDeleteButton" class="btn d-none"  type="button">Trash</button>
+     <button id="massDeleteButton" class="btn btn-primary d-none"  type="button">Trash</button>
    </div>
 `;
 let tr = section.querySelector('.sp-tr');
@@ -185,11 +185,20 @@ data.id = (data.id)?data.id:`id${this.main.utils.getRandomInt(100)}`;
 row.innerHTML =
  `
 <label for="${data.id}" class="sp-form-label ${this.addClassIf(isCheck,['form-check-label'],['form-label'])}  ${this.showIf(data.title)}">${data.title?data.title:''}</label>
-<input type="${data.type}" ${(isCheck &&(data.value==true || data.value=='true'))?'checked':''}  class="sp-form-control ${this.addClassIf(isCheck,['form-check-input'],['form-control'])} ${data.clasz?.join(' ')}" value="${data.value?data.value:''}" name="${data.name?data.name:''}" id="${data.id}">
+<input type="${data.type}" ${(isCheck &&(data.value==true || data.value=='true'))?'checked':''}  class="sp-form-control ${this.addClassIf(isCheck,['form-check-input'],['form-control'])} ${data.clasz?.join(' ')}"  id="${data.id}">
  `
 let input = row.querySelector('input');
 if(data.divClasz){
   this.addClass(row,data.divClasz);
+}
+
+if(data.value){
+input.setAttribute('value',data.value);
+//input.value = data.value;
+}
+
+if(data.name){
+input.name = data.name;
 }
 
 if(data.placeholder){

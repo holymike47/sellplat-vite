@@ -98,10 +98,9 @@ tenantUuid:this.main.cache.tenant.tenantUuid,
 console.log('before submit');
 console.log(option);
 let state = this.state;
-state.handler = 'save';
 state.body = JSON.stringify(option);
 let r = await this.main.fu.fetch(state);
-if(r==this.option$.id){
+if(r && r==this.option$.id){
 this.option$ = option;
 this.main.cache.option = option;
 this.main.setTheme(this.option$.activeTheme);

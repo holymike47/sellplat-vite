@@ -4,6 +4,7 @@ import { Menu } from "./menu";
 import { User } from "./user";
 import { Category } from "./category";
 import { Post } from "./post";
+import { th } from "intl-tel-input/i18n";
 export class Dashboard{
 /**
  * 
@@ -56,12 +57,12 @@ function addEvents(){
 
 $this.main.pbu.listen($this.signoutLink,'click',async(e)=>{
 e.preventDefault();
-let url = $this.main.fu.getApi($this.state.username,true)+'/logout';
-let r = await $this.main.fu.fetch({url:url,isAdmin:true,method:'POST',body:JSON.stringify({})});
-if(r===true){
+let state = $this.main.utils.clone($this.state);
+state.link = $this.main.fu.getApi($this.state.username,true,'logout');
+state.method = 'POST';
+let r = await $this.main.fu.fetch(state);
+if(r==true){
 $this.main.navigate({component:'login',url:'/app/login'});
-}else{
-$this.main.utils.notify("Error",2,'s');
 }
 });
 
@@ -319,18 +320,20 @@ console.log(this.idsToDelete);
  * @param {number[]} ids 
  */
 async deleteItems(ids){
-let modal = this.main.utils.setModal('Confirm Deletion',null);
+let modal = this.main.utils.setModal('Confirm Deletion','blanc');
 this.main.pbu.listen(modal.confirm,'click',async ()=>{
 ///
 let state = this.main.utils.clone(this.child.state);
 state.body = JSON.stringify(ids);
-state.handler = 'delete';
+state.method = "DELETE";
 let r = await this.main.fu.fetch(state);
 if(r==true){
 let updatedItems =[];
+let deletedItems =[];
 let items = this.child.getItems();
 for(let i of items){
 if (this.idsToDelete.includes(i.id)){
+deletedItems.push(i);
 continue;
 }else{
 updatedItems.push(i);
@@ -338,6 +341,7 @@ updatedItems.push(i);
 }//for
 this.child.setItems(updatedItems);
 this.idsToDelete = [];
+this.main.mh.deleteFromServer({items:deletedItems});
 let template = this.child.getListTemplate();
 //maybe unsubscribe here
 this.mount(template);

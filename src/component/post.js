@@ -12,11 +12,12 @@ export class Post{
 constructor(main,state){
 this.main = main;//used when using this component to create another
 this.state = state;
-
+console.log("main in post");
+console.log(this.main);
 //let controller = new AbortController();
 //
-/**@type {any|null}*/this.postDto = null;
-/**@type {any|null}*/this.postViewDto = null;
+/**@type {any|null}*/this.postDto = null;//admin
+/**@type {any|null}*/this.postViewDto = null;//guest
 /**@type {number}*/this.homePageId;
 /**@type {any[]|null}*/this.posts$ = null;
 /**@type {any[]|null}*/this.displayPosts = [];
@@ -88,11 +89,11 @@ if(r){
 this.postViewDto = r;
 console.log("postViewDto");
 console.log(this.postDto);
-this.main.cache.option = this.postViewDto.option;
-this.main.cache.menus = this.postViewDto.menus;
+this.main.viewCache.option = this.postViewDto.option;
+this.main.viewCache.menus = this.postViewDto.menus;
 this.headerTemplate = await this.getMenuTemplate('main');
 this.footerTemplate = await this.getMenuTemplate('footer');
-this.main.setTheme(this.main.cache.option.activeTheme);
+this.main.setTheme(this.main.viewCache.option.activeTheme);
 if(state.isArchive){
 this.getArchive();
 }else{
@@ -374,7 +375,11 @@ $this.main.pbu.show($this.postTagsSection);
 $this.renderTags();
 $this.main.pbu.show($this.isFeaturedSection,$this.isStickySection,$this.allowCommentsSection);
 //featured image
-$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:$this.post$.featuredImageUrl,width:"72", height:"57"});
+//$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(p.featuredImageUrl,'grid'),width:"72", height:"57"});
+$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:($this.state.type=='new')?'':$this.main.mh.getImageUrl(p.featuredImageUrl,'grid')});
+// if(p.featuredImageUrl){
+//     $this.main.pbu.show($this.featuredImageTemplate.originalButton);
+// }
 //cant use an icon as featured image
 $this.featuredImageTemplate.insertIcon.remove();
 $this.main.pbu.appendChild($this.featuredImageSection,$this.featuredImageTemplate.div);
@@ -451,7 +456,7 @@ ${this.main.pbu.outerHTML(this.headerTemplate?this.headerTemplate:this.getMenuTe
 <!--Post title and feature image-->
 <div class="cover ${this.main.pbu.showIf(p.slug!='home')} ${this.main.pbu.addClassIf(!p.featuredImageUrl,['p-4', 'p-md-5','mb-4','rounded','text-body-emphasis', 'bg-body-secondary'])}">
   <div class="featured-image ${this.main.pbu.showIf(p.featuredImageUrl)}">
-      <p><img src=${p.featuredImageUrl} alt="" class="img-thumbnail featured-image"/></p>
+      <p><img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="img-thumbnail featured-image"/></p>
     </div>
   <div class="px-0">
     <h1 class="display-4 fst-italic title">${p.title}</h1>
@@ -529,8 +534,8 @@ async getMenuTemplate(slug,clasz=[]){
         nav.innerHTML = 
     `
     <div class="container-fluid">
-    <a class="${this.main.pbu.showIf(this.main.cache.option.logoUrl)} sp-detail sp-slug-link me-2" data-slug="home" href="/${this.state.username}"><img width="60" height="60" src="${this.main.cache.option.logoUrl}" /></a>
-    <a class="nav-link sp-nav-link sp-site-title sp-detail sp-slug-link" data-slug="home" href="/${this.state.username}">${this.main.cache.option.siteName}</a>
+    <a class="${this.main.pbu.showIf(this.main.viewCache.option.logoUrl)} sp-detail sp-slug-link me-2" data-slug="home" href="/${this.state.username}"><img width="60" height="60" src="${this.main.viewCache.option.logoUrl}" /></a>
+    <a class="nav-link sp-nav-link sp-site-title sp-detail sp-slug-link" data-slug="home" href="/${this.state.username}">${this.main.viewCache.option.siteName}</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -555,7 +560,7 @@ async getMenuTemplate(slug,clasz=[]){
     }
     
 let menuUl = nav.querySelector('.navbar-nav');
-let theMenu = this.main.cache.menus.filter(m=>m.slug==slug)[0];
+let theMenu = this.main.viewCache.menus.filter(m=>m.slug==slug)[0];
 if(theMenu.menuItems){
 let menuItems = JSON.parse(theMenu.menuItems);
 let navItem,navLink;
@@ -965,6 +970,8 @@ let tagLists = this.tagIntendedList.querySelectorAll('li');
  * @param {string} pbMessage 
  */
 async submitPost(pbMessage){
+console.log("main in submit");
+console.log(this.main);
 if(!this.main.vu.required(this.postTitleControl)){
     return;
 }
@@ -973,6 +980,17 @@ if(this.state.postType=='page' && this.state.type=='new' && this.main.config.RES
     this.main.utils.notify('This title is reserved',1,'d');
     return;
 }
+
+//process featured image
+let oldImageId;
+let newImageId = await this.main.mh.uploadToServer(this.featuredImageSection.querySelector('div.image-template'));
+if(newImageId && newImageId !=this.post$.featuredImageUrl){
+   if(this.post$.featuredImageUrl){
+    oldImageId = this.main.utils.clone(this.post$.featuredImageUrl);
+    }
+    this.post$.featuredImageUrl = newImageId; 
+}
+
 //process category
 let categoryTitle,categoryId;
 if(this.state.postType!='page'){
@@ -1002,14 +1020,6 @@ v:{
 }
 };
 sidebarWidgets.push(m);
-// sidebarWidgets.push({
-//     m:'recentPosts',
-//     l:l,
-//     cat:cat,
-//     we:we,
-//     wi:wi,
-//     wm:wm
-// });
 }
 // return;
 ///
@@ -1020,7 +1030,7 @@ slug:title.toLowerCase(),
 mainContent:pbMessage,
 excerpt:this.post$.excerpt,
 postType:this.state.postType,
-featuredImageUrl:this.featuredImageTemplate?.image.src,
+featuredImageUrl:this.post$.featuredImageUrl,
 keywords:this.post$.keywords,
 tags:this.postTags.join(this.main.config.SPLITTER),
 likes:this.post$.likes,
@@ -1033,19 +1043,21 @@ sidebarType:this.sidebarTypeSelector.value,
 sidebarWidgets:JSON.stringify(sidebarWidgets),
 categoryTitle:categoryTitle,//
 categoryId:categoryId,
-category:null,
-username:this.main.cache.tenant.username,
-tenantId:this.main.cache.tenant.tenantId,
-tenantUuid:this.main.cache.tenant.tenantUuid,
+category:null
 }
+this.main.utils.sign(post);
 //now save post
 console.log('before submit');
 console.log(post);
 let state = this.state;
+console.log(state);
 state.body = JSON.stringify(post);
 let r = await this.main.fu.fetch(state);
 if(r>0){
 this.main.utils.notify('Saved',0,'s');
+if(oldImageId){
+this.main.mh.deleteFromServer({imageIds:[oldImageId]});
+}
 this.state = this.main.replaceState(this.post$,this.state,r);
 }
 }//submitPost
