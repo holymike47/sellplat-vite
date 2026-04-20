@@ -37,6 +37,7 @@ this.viewCache = {};//
 this.posts$ = null;
 this.categories$ = null;
 this.categoryTitles = null;
+this.oldImageIds = [];
 this.init();
 //
 }//
@@ -198,10 +199,10 @@ case 'home':
 new Home(this,state);
 break;
 case 'login':
-new Login(this,state);
+this.login = new Login(this,state);
 break;
 case 'register':
-new Register(this,state);
+this.register = new Register(this,state);
 break;
 case 'dashboard':
 if(!this.dasboard){

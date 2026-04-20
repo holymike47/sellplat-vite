@@ -331,6 +331,7 @@ $this.main.pbu.hide(icon);
 handleImage(template){
 let input = template.input;
 let image = template.image;
+//let oldImageId;
 let originalImageSrc = image.src;
 let uploadButton = template.uploadButton;
 let insertButton = template.insertButton;
@@ -352,8 +353,9 @@ $this.main.pbu.hide(remove);
 uploadButton.textContent = 'Upload';
 }
 //
-if(originalImageSrc && originalImageSrc.startsWith('https')){
+if(originalImageSrc && originalImageSrc.startsWith('http')){
     $this.main.pbu.show(template.originalButton);
+    image.setAttribute('oldImageId',originalImageSrc);
 }
 }
 reader.readAsDataURL(file);
@@ -473,6 +475,7 @@ reader.readAsDataURL(file);
 async uploadToServer(imageTemplate){
 let image = imageTemplate.querySelector('.main-image');
 let input = imageTemplate.querySelector('.sp-input');
+let oldImageId = imageTemplate.querySelector('.main-image').getAttribute('oldImageId');
 //let src = imageTemplate.image.src;
 if(image.src?.startsWith('data:image')){
 //firstly, get upload link
@@ -497,6 +500,9 @@ body:formData
 r = await this.main.fu.fetchExt(data);
 if(r){
     image.src = this.main.mh.getImageUrl(r.result.id,'public');
+if(oldImageId?.includes('imagedelivery')){
+    this.main.oldImageIds.push(oldImageId.split('/')[4]);
+}
     return r.result.id;
 }else{
 this.main.utils.notify("Error uploading image",2,'m');
@@ -507,37 +513,8 @@ throw new Error();
     let paths = image.src.split('/');
     return paths[4];
 }else{
-    return false;
+    return '';
 }
-}//func
-
-/**
- * 
- * @param {File} file 
- */
-async uploadToServerbk(file){
-let state = this.main.utils.clone(this.main.state);
-//state.link = this.main.fu.getApi(state.username,true,'token',[{n:'type',v:'cloudflare'},{n:'oldImageId',v:oldImageId?oldImageId:""}]);
-state.link = this.main.fu.getApi(state.username,true,'token');
-let input = {
-"type":"cloudflare",
-"job":"uploadLink"
-};
-state.body = JSON.stringify(input);
-let r = await this.main.fu.fetch(state);
-console.log(r);
-if(r){
-let formData = new FormData();
-formData.append("file", file);
-let data = {
-link:r.result.uploadURL,
-body:formData
-};
-r = await this.main.fu.fetchExt(data);
-if(r){
-    return r.result;
-}
-}//
 }//func
 
 /**
@@ -548,10 +525,13 @@ if(r){
 async deleteFromServer(data){
 let state = this.main.utils.clone(this.main.state);
 let imageIds = [];
-if(data.imageIds){
+if(data==null){
+imageIds = [...this.main.oldImageIds];
+this.main.oldImageIds = [];
+}
+else if(data.imageIds){
 imageIds = [...data.imageIds];
 }else if(data.items){
-
     for(let i of data.items){
             if(i.featuredImageUrl){
                 imageIds.push(i.featuredImageUrl);

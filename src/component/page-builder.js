@@ -253,6 +253,7 @@ case 'list':
 bc = $this.getListBlock(data);
 break;
 case 'image':
+data.v.src = $this.main.mh.getImageUrl(data.v.src,'public');
 bc = $this.getImageBlock(data);
 break;
 case 'form':
@@ -610,6 +611,7 @@ let imageId = await this.main.mh.uploadToServer(imageTemplate);
 m.v={
 src:imageId
 };
+
 break;
 case 'form':
 let titles = [];

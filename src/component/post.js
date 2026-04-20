@@ -376,7 +376,7 @@ $this.renderTags();
 $this.main.pbu.show($this.isFeaturedSection,$this.isStickySection,$this.allowCommentsSection);
 //featured image
 //$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(p.featuredImageUrl,'grid'),width:"72", height:"57"});
-$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:($this.state.type=='new')?'':$this.main.mh.getImageUrl(p.featuredImageUrl,'grid')});
+$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:(p.featuredImageUrl)?$this.main.mh.getImageUrl(p.featuredImageUrl,'grid'):''});
 // if(p.featuredImageUrl){
 //     $this.main.pbu.show($this.featuredImageTemplate.originalButton);
 // }
@@ -982,14 +982,14 @@ if(this.state.postType=='page' && this.state.type=='new' && this.main.config.RES
 }
 
 //process featured image
-let oldImageId;
+//let oldImageId;
 let newImageId = await this.main.mh.uploadToServer(this.featuredImageSection.querySelector('div.image-template'));
-if(newImageId && newImageId !=this.post$.featuredImageUrl){
-   if(this.post$.featuredImageUrl){
-    oldImageId = this.main.utils.clone(this.post$.featuredImageUrl);
-    }
-    this.post$.featuredImageUrl = newImageId; 
-}
+// if(newImageId && newImageId !=this.post$.featuredImageUrl){
+//    if(this.post$.featuredImageUrl){
+//     oldImageId = this.main.utils.clone(this.post$.featuredImageUrl);
+//     }
+//     this.post$.featuredImageUrl = newImageId; 
+// }
 
 //process category
 let categoryTitle,categoryId;
@@ -1030,7 +1030,7 @@ slug:title.toLowerCase(),
 mainContent:pbMessage,
 excerpt:this.post$.excerpt,
 postType:this.state.postType,
-featuredImageUrl:this.post$.featuredImageUrl,
+featuredImageUrl:newImageId,
 keywords:this.post$.keywords,
 tags:this.postTags.join(this.main.config.SPLITTER),
 likes:this.post$.likes,
@@ -1055,9 +1055,7 @@ state.body = JSON.stringify(post);
 let r = await this.main.fu.fetch(state);
 if(r>0){
 this.main.utils.notify('Saved',0,'s');
-if(oldImageId){
-this.main.mh.deleteFromServer({imageIds:[oldImageId]});
-}
+this.main.mh.deleteFromServer(null);
 this.state = this.main.replaceState(this.post$,this.state,r);
 }
 }//submitPost
