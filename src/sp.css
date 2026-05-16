@@ -25,12 +25,12 @@ body{
   font-size: 1.25rem;
 }
 
-.card,.sp-bg-color,.sp-bg{
+.card,.sp-bg-color{
   background:var(--sp-card);
   border:1px solid var(--sp-border);
 }
 
-a,.sp-nav-link,.sp-h,.sp-list-group i{
+a,.sp-nav-link,.sp-list-group i{
   color:var(--sp-primary);
 }
 
@@ -38,17 +38,17 @@ a:hover,.sp-link:hover{
   color:var(--sp-primary-hover);
 }
 
-.sp-btn,.btn-primary,button{
+.btn-primary,button{
   color:white;
   background:var(--sp-primary);
 }
 
-.btn-primary:hover,.sp-btn:hover,button:hover{
+.btn:hover,button:hover{
   color:white;
   background:var(--sp-primary-hover);
 }
 
-.btn:disabled {
+button:disabled,.btn.disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background:var(--sp-primary-hover);

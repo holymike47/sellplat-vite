@@ -18,7 +18,13 @@ constructor(main){
  * @returns 
  */
 async fetch(state){
+    //fix later
+if(state.notice){
+    //cant be cloned
+    this.notice = state.notice;
+}
 state = this.main.utils.clone(state);
+state.notice = this.notice;
 if(!state.method){
 state.method = (state.body)?'POST' :'GET';
 }
@@ -26,32 +32,17 @@ let headers = new Headers();
 headers.append("sp","sp");
 headers.append("Content-Type", "application/json");
 headers.append("sp-nsu", state.nextState?`/api${state.nextState.url}`:"");
-if(state.isMainPost){
-    //eg searches
-headers.append("sp-main-post","main-post");
-}
-let option = {headers:headers,method:state.method,credentials: 'include'};
-if(state.isAdmin){
-this.errorMessage = (state.errorMessage)?state.errorMessage: `Error retrieving ${state.component}`;//???
-//option.credentials = 'include';
-
-//
-// headers.append("sp-select",state.select?state.select:"");
-// headers.append("sp-where",state.where?state.where:"");
-// headers.append("sp-vals",state.vals?state.vals:"");//
+let option = {headers:headers,method:state.method};
+//let option = {headers:headers,method:state.method,credentials: 'include'};
+if(state.isAdmin || state.component=='login' || state.component=='register'){
+this.errorMessage = (state.errorMessage)?state.errorMessage: `Error processing ${state.component}`;//???
+option.credentials = 'include';
 }
 if(state.body){
     option.body = state.body;
 }
 //now
-//headers.append("sp-handler",state.handler);
 let url = (state.link)? state.link: this.getApi(state.username,'dashboard',state.url,null);
-if(state.isAdmin){
-console.log(state);
-console.log("url: "+url);
-//return;
-}
-
 let request = new Request(url,option);
 let response;
 let responseJson;
@@ -64,7 +55,7 @@ responseJson = await response.json();
 if(import.meta.env.MODE=='development'){
 console.error(error);
 }
-this.main.utils.notify(this.errorMessage,2,state.isAdmin?'s':'m');
+this.main.utils.notify(this.errorMessage,2,state.isAdmin?'d':'m',state.notice);
 throw new Error();
 }// end fetch
 let notifications = document.querySelectorAll('.notification') || [];
@@ -147,7 +138,7 @@ else{
 
 if(path){
     if(path.startsWith('/')){
-        path = url + path;
+        url = url + path;
     }else{
         url = url + `/${path}`;
     }

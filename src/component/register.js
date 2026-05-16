@@ -1,5 +1,4 @@
 // @ts-check
-import { Post } from "./post";
 export class Register{
 /**
  * 
@@ -9,10 +8,7 @@ export class Register{
 constructor(main,state){
 this.main = main;
 this.state = state;
-//
 this.title = "register";
-this.tenant={};
-this.cache = undefined;
 this.getTemplate();
 }//
 
@@ -21,122 +17,88 @@ let $this = this;
 this.registerComponent = this.main.pbu.createElement('main',['form-signin','w-100','m-auto']);
 this.registerComponent.innerHTML = 
 `
-  <form>
-  
-    <img class="mb-4" src="/cc_logo_trans.png" alt="" width="72" height="57">
-    <h3 class="h3 mb-3 fw-normal login">Register</h3>
-      <section class='login'>
-     ${this.main.pbu.createFormControl({serialize:true,id:'email',title:"Email",name:'Email'})}
-    ${this.main.pbu.createFormControl({serialize:true,id:'password',title:"Password",name:'Password',type:'password'})}
-    <button class="btn btn-primary w-100 py-2 login" type="button">Submit</button>
+<img class="mb-4" src="/images/logo/sp_logo.png" alt="" width="72" height="57">
+    <h3 class="h3 mb-3 fw-normal sp-title">Register</h3>
+  <form class="auth">
+    <section'>
+    ${this.main.pbu.createFormControl({serialize:true,title:"First Name",clasz:['first-name','sp-validation-required']})}
+    ${this.main.pbu.createFormControl({serialize:true,title:"Last Name",clasz:['last-name','sp-validation-required']})}
+     ${this.main.pbu.createFormControl({serialize:true,title:"Email",type:'email',clasz:['email','sp-validation-required']})}
+    ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',clasz:['password','sp-validation-required']})}
+    <button class="btn btn-primary w-100 my-2 sp-button" type="button">Submit</button>
+    <p class="text-center small"><a href="/app/login">Already have an account? Log in</a></p>
    </section>
-
-    <section class="auth-token d-none">
-    <div class="sp-form-control mb-2">
-    <input type="text" class="form-control auth-token">
-    </div>
-    <button class="btn btn-primary w-100 py-2 auth-token" type="button">Verify</button>
-    </section>
-
-    <section class="dashboard d-none">
-    <button class="btn btn-primary w-100 py-2 dashboard" type="button">Dashboard</button>
-    </section>
   </form>
 `;
 this.main.pbu.mount(this.registerComponent);
 //
-this.formTitle = this.registerComponent.querySelector('h3.login');
-this.loginSection = this.registerComponent.querySelector('section.login');
-this.emailControl = this.registerComponent.querySelector('input#email');
-this.passwordControl = this.registerComponent.querySelector('input#password');
-this.loginButton = this.registerComponent.querySelector('button.login');
+this.authForm = this.registerComponent.querySelector('form.auth');
+this.formTitle = this.registerComponent.querySelector('h3.sp-title');
+this.firstNameControl = this.registerComponent.querySelector('input.first-name');
+this.lastNameControl = this.registerComponent.querySelector('input.last-name');
+this.emailControl = this.registerComponent.querySelector('input.email');
+this.passwordControl = this.registerComponent.querySelector('input.password');
+this.loginButton = this.registerComponent.querySelector('button.sp-button');
 //
-this.authTokenSection = this.registerComponent.querySelector('section.auth-token');
-this.authTokenControl = this.registerComponent.querySelector('input.auth-token');
-this.authTokenButton = this.registerComponent.querySelector('button.auth-token');
-//
-this.dashboardSection = this.registerComponent.querySelector('section.dashboard');
-this.dashboardButton = this.registerComponent.querySelector('button.dashboard');
-
 addEvents();
 function addEvents(){}
 $this.main.pbu.listen($this.loginButton,'click',()=>{
-$this.exists();
-});
-
-$this.main.pbu.listen($this.authTokenButton,'click',()=>{
-$this.verifyAuthToken();
-});
-
-$this.main.pbu.listen(this.dashboardButton,'click',()=>{
-   let dashboardState = {
-  component:'dashboard',
-  username:$this.username,
-  url:`/app/${$this.username}/dashboard/page/detail/0`,
-  isAdmin:true
-  }
-  $this.main.navigate(dashboardState);
+$this.register();
 });
 }//func
 /**
  * 
  * @returns check if tenant exist, if not, send auth token to verify email
  */
-async exists(){
-if(! this.main.vu.validate(this.emailControl,this.passwordControl)){
+async register(){
+if(! this.main.vu.validate(this.authForm.querySelectorAll('input.sp-validation'))){
     return;
 }
+let firstName = this.firstNameControl.value;
+let lastName = this.lastNameControl.value;
+let email = this.emailControl.value;
+let password = this.passwordControl.value;
 let tenant = {
-email: this.emailControl.value,
-password:this.passwordControl.value
+firstName:firstName,
+lastName:lastName,
+email: email,
+password:password,
+clientUUID:this.main.utils.getUUID()
 };
-this.tenant = tenant;
-console.log(this.tenant);
+
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(undefined,false,'exists');
-state.body = tenant.email;
+state.link = this.main.fu.getApi('sp',false,'exists',[{n:'type',v:'token'}]);
+state.body = JSON.stringify({email:email});
 //dont springify a single value like email else extra double quote will be added
 let r = await this.main.fu.fetch(state);
 if(r){
-this.authToken= r;
-this.loginSection.remove();
-this.main.pbu.show(this.authTokenSection);
-this.formTitle.textContent="Please enter the token sent to you";
-}
-}//
-
-
-verifyAuthToken(){
-if(this.authTokenControl.value == this.authToken){
-this.authTokenSection.remove();
-this.formTitle.textContent = 'Verified';
-//now register client
-this.register()
-}
-else{
-//wrong token
-this.formTitle.textContent = 'Wrong, please try again';
-}
-}//func
-
-async register(){
-let state = this.main.utils.clone(this.state);
+  let authToken = r;
+  this.formTitle.textContent="Please enter the token sent to you";
+  let authTokenTemplate = this.main.tu.authToken();
+this.main.pbu.replace(this.authForm,authTokenTemplate.section);
+//event
+this.main.pbu.listen(authTokenTemplate.button,'click',async()=>{
+  if(! this.main.vu.validate(authTokenTemplate.input)){return;}
+    if(authTokenTemplate.input.value!=authToken){
+      this.main.utils.notify('Wrong, please try again',2,'m');
+    }else{
+      //now register client
 state.link = this.main.fu.getApi(undefined,false,'register');
-state.body = JSON.stringify(this.tenant);
+state.body = JSON.stringify(tenant);
 let r = await this.main.fu.fetch(state);
 if(r){
 console.log(r);
-this.cache = r;
-this.username = this.cache.tenant.username;
-//normalize tenantId
-this.cache.tenant.tenantId = this.cache.tenant.id;
-this.main.cache = this.cache;
+this.main.utils.setCache('user',r.user);
+this.main.utils.setCache('option',r.option);
+let username = r.user.username;
 this.formTitle.textContent = 'Thank you, please visit your dashboard';
-this.authTokenSection.remove();
-//display link of dashboard; dashboard link is inside a div which is initially hidden
-this.main.pbu.show(this.dashboardSection);
+//display link of dashboard; 
+this.authForm.innerHTML = `<a href="/app/${username}/dashboard/page/detail/0" class="btn btn-primary w-100 py-2" >Dashboard</button>`;
 }
+    }
+});
 
+}
 }//func
 
 }//#class

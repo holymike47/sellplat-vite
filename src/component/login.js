@@ -10,11 +10,7 @@ export class Login{
 constructor(main,state){
 this.main = main;
 this.state = state;
-//
 this.title = "login";
-this.user={};
-/**@type {string}*/this.username='';
-//this.cache = null;
 this.getTemplate();
 }//
 
@@ -24,51 +20,42 @@ let $this = this;
 this.loginComponent = this.main.pbu.createElement('main',['form-signin','w-100','m-auto']);
 this.loginComponent.innerHTML = 
 `
-  <form>
-  
-    <img class="mb-4" src="/cc_logo_trans.png" alt="" width="72" height="57">
-    <h3 class="h3 mb-3 fw-normal login">Please sign in</h3>
-      <section class='login'>
-     ${this.main.pbu.createFormControl({serialize:true,id:'email',title:"Email",name:'Email'})}
-    ${this.main.pbu.createFormControl({serialize:true,id:'password',title:"Password",name:'Password',type:'password'})}
-    <button class="btn btn-primary w-100 py-2 login" type="button">Sign in</button>
+   <img class="mb-4" src="/images/logo/sp_logo.png" alt="" width="72" height="57">
+   <h3 class="h3 mb-3 fw-normal sp-title">Please sign in</h3>
+  <form class="auth">
+    <section>
+    ${this.main.pbu.createFormControl({serialize:true,title:"Email",type:'email',clasz:['email','sp-validation-required']})}
+    ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',withSubmit:true,clasz:['password','sp-validation-required']})}
+    <p class="float-end"><a class="sp-forgot-password" type="button">Forgot password?</a></p>
+    <p class="text-center small"><a href="/app/register">Don't have an account? Sign up</a></p>
    </section>
-
-    <section class="auth-token d-none">
-    <div class="sp-form-control mb-2">
-    <input type="text" class="form-control auth-token">
-    </div>
-    <button class="btn btn-primary w-100 py-2 auth-token" type="button">Verify</button>
-    </section>
   </form>
 `;
 this.main.pbu.mount(this.loginComponent);
 //
-this.formTitle = this.loginComponent.querySelector('h3.login');
-this.loginSection = this.loginComponent.querySelector('section.login');
-this.emailControl = this.loginComponent.querySelector('input#email');
-this.passwordControl = this.loginComponent.querySelector('input#password');
-this.loginButton = this.loginComponent.querySelector('button.login');
-//
-this.authTokenSection = this.loginComponent.querySelector('section.auth-token');
-this.authTokenControl = this.loginComponent.querySelector('input.auth-token');
-this.authTokenButton = this.loginComponent.querySelector('button.auth-token');
-//
+this.authForm = this.loginComponent.querySelector('form.auth');
+this.formTitle = this.loginComponent.querySelector('h3.sp-title');
+this.emailControl = this.loginComponent.querySelector('input.email');
+this.passwordControl = this.loginComponent.querySelector('input.password');
+this.forgotPasswordButton = this.loginComponent.querySelector('a.sp-forgot-password');
+this.loginButton = this.loginComponent.querySelector('button.sp-button');
+
 addEvents();
 //finally
 function addEvents(){
 $this.main.pbu.listen($this.loginButton,'click',()=>{
-$this.submit();
+$this.login();
 });
-//
-$this.main.pbu.listen($this.authTokenButton,'click',()=>{
-  $this.verifyAuthToken();
+//password reset
+$this.main.pbu.listen($this.forgotPasswordButton,'click',(e)=>{
+e.preventDefault();
+$this.resetPassword();
 });
 }//inner
 }//func
 
 
-async submit(){
+async login(){
 if(! this.main.vu.validate(this.emailControl,this.passwordControl)){
     return;
 }
@@ -80,54 +67,113 @@ email:email,
 password:password,
 clientUUID:this.main.utils.getUUID()
 };
-this.user = user;
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(undefined,false,'login');
-state.body = JSON.stringify(this.user);
+state.link = this.main.fu.getApi(this.state.username,false,`login`);
+state.body = JSON.stringify(user);
 let r = await this.main.fu.fetch(state);
 if(r){
   console.log("response");
   console.log(r);
-   this.authToken = r.token;
-if(this.state.nextState){
-  this.state.nextState.stateObject= r.stateObject;
-}else{
-console.log("main before");
-console.log(this.main);
-this.main.cache = r;
-console.log("main after");
-console.log(this.main);
-this.username = this.main.cache.tenant.username;
-}
-this.loginSection.remove();
-this.main.pbu.show(this.authTokenSection);
+  let tempData = r;
 this.formTitle.textContent="Please enter the token sent to you";
-}
-}//func
-
-
-verifyAuthToken(){
-  if(this.authTokenControl.value == this.authToken){
-    //display link of dashboard
+let authTokenTemplate = this.main.tu.authToken();
+this.main.pbu.replace(this.authForm,authTokenTemplate.section);
+//event
+this.main.pbu.listen(authTokenTemplate.button,'click',()=>{
+  if(!this.main.vu.validate(authTokenTemplate.input)){ return;}
+  if(authTokenTemplate.input.value != tempData.token){
+    this.main.utils.notify('Wrong, please try again',2,'m');
+  }else{
     if(this.state.nextState){
+      this.state.nextState.stateObject= tempData.stateObject;
      this.main.navigate(this.state.nextState);
     }else{
-      //normalize tenantId
-    this.main.cache.tenant.tenantId = this.main.cache.tenant.id;
-    this.main.setTheme(this.main.cache.option.activeTheme);
+      let username = tempData.user.username;
+    this.main.setTheme(tempData.option);
+    this.main.utils.setCache('user',tempData.user);
+    this.main.utils.setCache('option',tempData.option);  
             let dashboardState = {
                 component:'dashboard',
-                username:this.username,
-                url:`/app/${this.username}/dashboard/page/detail/0`,
-                isAdmin:true,
+                username:username,
+                url:`/app/${username}/dashboard/page/detail/0`,
+                isAdmin:true
                 };
                 this.main.navigate(dashboardState);
                   }
   }
-  else{
-    //wrong token
-    this.formTitle.textContent = 'Wrong, please try again';
-  }
+
+});
+}
+}//func
+
+resetPassword(){
+let email,password;
+this.formTitle.textContent="Forgot your password?";
+this.authForm.innerHTML = 
+`
+<section>
+<p>You will receive a token to reset your password</p>
+    ${this.main.pbu.createFormControl({serialize:true,title:"Email",type:'email',withSubmit:true,clasz:['email','sp-validation-required']})}
+</section>
+`;
+let emailControl = this.authForm.querySelector('.email');
+let submitButton = this.authForm.querySelector('.sp-button');
+//event
+this.main.pbu.listen(submitButton,'click',async()=>{
+if(! this.main.vu.validate(emailControl)){return;}
+email = emailControl.value;
+let state = this.main.utils.clone(this.state);
+state.body = JSON.stringify({email:email});
+state.link  = this.main.fu.getApi(state.username,false,'resettoken',[{n:'type',v:'token'}]);
+let r = await this.main.fu.fetch(state);
+if(r){
+  let authToken = r;
+  this.formTitle.textContent="Please enter the token sent to you";
+  let authTokenTemplate = this.main.tu.authToken();
+this.main.pbu.replace(this.authForm,authTokenTemplate.section);
+//event
+this.main.pbu.listen(authTokenTemplate.button,'click',()=>{
+  if(! this.main.vu.validate(authTokenTemplate.input)){return;}
+    if(authTokenTemplate.input.value!=authToken){
+      this.main.utils.notify('Wrong, please try again',2,'m');
+    }else{
+      this.formTitle.textContent="Reset your password";
+      this.authForm.innerHTML = 
+      `
+      ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',clasz:['password','sp-validation-required']})}
+      ${this.main.pbu.createFormControl({serialize:true,title:"Confirm Password",type:'password',withSubmit:true,clasz:['confirm-password','sp-validation-required']})}
+      `;
+      let passwordControl = this.authForm.querySelector('input.password');
+      let confirmPasswordControl = this.authForm.querySelector('input.confirm-password');
+      let submitButton = this.authForm.querySelector('.sp-button');
+      //event
+      this.main.pbu.listen(submitButton,'click',async()=>{
+        if(! this.main.vu.validate(passwordControl,confirmPasswordControl )){return;}
+        if(passwordControl.value != confirmPasswordControl.value){
+          this.main.utils.notify('Password must be same',2,'m');
+          return;
+        }
+        password = passwordControl.value;
+        //now submit password for reset
+        state.link = this.main.fu.getApi(state.username,false,'resettoken',[{n:'type',v:'update'}]);
+        state.body = state.body = JSON.stringify({email:email,password:password});
+        let r = await this.main.fu.fetch(state);
+        if(r=='ok'){
+          this.formTitle.textContent="Reset successful, please login to your account";
+          let href = `/app/${state.username}/login`;
+          this.authForm.innerHTML = `<a href="${href}" class="btn btn-primary w-100 py-2" >Submit</button>`;
+        }
+      });
+      
+
+    }
+});
+
+}
+});
+///
+
+
 }//func
 
 }//#class

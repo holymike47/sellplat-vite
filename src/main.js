@@ -11,6 +11,7 @@ import { Utils } from './util/utils.js';
 import { PbUtils } from './util/pb-utils.js';
 import { FetchUtils } from './util/fetch-utils.js';
 import {ValidationUtils} from './util/validation-utils.js';
+import { TemplateUtils } from './util/template-utils.js';
 import { Home } from './component/home.js';
 import { Post } from './component/post.js';
 import { Login } from './component/login.js';
@@ -28,16 +29,13 @@ this.utils = new Utils(this);//??
 this.pbu =  new PbUtils(this);
 this.fu = new FetchUtils(this);
 this.vu = new ValidationUtils(this);
+this.tu = new TemplateUtils(this);
 this.pb = new PageBuilder(this,null);
 this.pb.isView = true;
 this.mh = new MediaHandler(this);
-this.state = null;
-this.cache = {};//important
-this.viewCache = {};//
-this.posts$ = null;
-this.categories$ = null;
-this.categoryTitles = null;
 this.oldImageIds = [];
+this.state = null;
+
 this.init();
 //
 }//
@@ -55,8 +53,7 @@ window.addEventListener('popstate', (e) => {
 let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
 if(pathname=='/' || pathname==''){
-  //isInit: application start
-//this.navigate({component:'home',url:'/',isAdmin:false,isInit:true});
+//isInit: application start
 let homeState = this.getHomeState('sellplat','home',0);
 homeState.isInit = true;
 this.navigate(homeState);
@@ -112,72 +109,37 @@ this.navigate(homeState);
  * @param {string} pathname 
  * @param {boolean} isInit
  */
-handleAdmin2(pathname,isInit){
-let paths = pathname.split('/');
-let loginState = {component:'login',url:'/app/login',isInit:isInit};
-  if(paths.length==2){
-    //ie. selplat.io/app
-    this.navigate(loginState);
-  }
-  // dashboard/admin
-  else if(paths.length==3){
-    //eg: app/login or app/register
-  let component = paths[2];
-  this.navigate({component:component,url:`/app/${component}`,isInit:isInit});
-  }else if(paths.length==7){
-    //note: admin link starts with app so lenght is 6 as opposed to normal view which is 5
-let nextState = this.getState(pathname,true);
-if(this.spSid && this.spStp){
-  //there may be a browser refresh
-nextState.isInit = false;
-this.navigate(nextState);
-}else{
-loginState.nextState = nextState;
-this.navigate(loginState);
-}
-  }else{
-    //not found or home or login
-    alert('handleAdmin: not found');
-  }
-}//
-
-/**
- * 
- * @param {string} pathname 
- * @param {boolean} isInit
- */
 handleAdmin(pathname,isInit){
 let paths = pathname.split('/');
-let loginState = {component:'login',url:'/app/login',isInit:isInit};
+let loginState,username;
   if(paths.length==2){
-    //ie. selplat.io/app
+    //ie. sellplat.io/app
+    username = 'sellplat';
+    loginState = this.getLoginState(username,isInit);
     this.navigate(loginState);
   }
   // dashboard/admin
   else if(paths.length==3){
     //eg: app/login or app/register
   let component = paths[2];
-  this.navigate({component:component,url:`/app/${component}`,isInit:isInit});
+  if(component=='register'){
+    this.navigate({component:'register',url:'/app/register',isInit:isInit});
+  }else{
+    username = 'sellplat';
+    loginState = this.getLoginState(username,isInit);
+    this.navigate(loginState);
+  }
+  
+  }else if(paths.length==4 && paths[3]=='login'){
+    //this is for a tenant or its user to login from their site eg: app/sp/login 
+    username = paths[2];
+    loginState = this.getLoginState(username,isInit);
+    this.navigate(loginState);
   }else if(paths.length==7){
     //recalculate uuid and set on request
     //note: admin link starts with app so lenght is 6 as opposed to normal view which is 5
 let nextState = this.getState(pathname,true);
 this.navigate(nextState);
-// nextState.uuid = this.utils.getUUID();
-// //loginState.nextState = nextState;
-// let login = new Login(this,nextState);
-// login.loginSession();
-//getSession(this.utils.getUUID());
-// if(session.spSid && session.spStp){
-//   this.navigate(nextState);
-// }else{
-//   loginState.nextState = nextState;
-//   this.navigate(loginState);
-// }
-
-//nextState.uuid = this.utils.getUUID();
-//loginState.nextState = nextState;
-//this.navigate(nextState);
   }else{
     //not found or home or login
     alert('handleAdmin: not found');
@@ -199,15 +161,13 @@ case 'home':
 new Home(this,state);
 break;
 case 'login':
-this.login = new Login(this,state);
+new Login(this,state);
 break;
 case 'register':
-this.register = new Register(this,state);
+new Register(this,state);
 break;
 case 'dashboard':
-if(!this.dasboard){
-this.dasboard = new Dashboard(this,state);
-}
+this.dasboard = this.dasboard || new Dashboard(this,state);
 this.dasboard.state = state;
 break;
 case 'option':
@@ -285,12 +245,14 @@ handleError(responseJson,state){
   if(import.meta.env.MODE=='development'){
     console.error(responseJson.errorMessage);
   }
-switch (Number(responseJson.id)){
+  let errorCode = Math.abs(Number(responseJson.id));
+switch (errorCode){
                 case 401:
                     //Unauthorized
-                    break;
                 case 403:
-                    //
+                case 807:
+                    //forbidden
+                    this.utils.notify(responseJson.message,2,'d');
                     break;
                 case 404:
                     //Guest
@@ -302,8 +264,9 @@ switch (Number(responseJson.id)){
                     break;
                 case 805:
                     //Session timedout
-                    let loginState = {component:'login',url:'/app/login',nextState:state};
-                    this.navigate(loginState);
+                case 405:
+                  //not authenticated
+                    this.navigate(this.getLoginState(state.username,false,state));
                     this.utils.notify(responseJson.message,1,'m');
                     break;
                 case 806:
@@ -312,24 +275,29 @@ switch (Number(responseJson.id)){
                     break;
                     case 811:
                     //Record exists
-                    this.utils.notify(responseJson.message,1,'m');
+                    this.utils.notify(responseJson.message,1,'d',state.notice);
                     break;
                 default:
-                    this.utils.notify(responseJson.message,2,'m');
+                    this.utils.notify(responseJson.message,1,'m',state.notice);
             }//
             throw new Error();
 }//func
 
 /**
  * 
- * @param {string} name 
+ * @param {any} option 
  */
-setTheme(name){
-let theme = this.config.THEMES[name.toLowerCase()];
+async setTheme(option){
+let theme = this.config.THEMES[option.activeTheme.toLowerCase()];
 for (let property in theme) {
     document.documentElement.style.setProperty(property, theme[property]);
   }
-}
+  if(option.iconUrl){
+    let icon = document.querySelector("link[rel='icon']");
+    icon.href = this.mh.getImageUrl(option.iconUrl,'public')  + "?v=" + Date.now();;
+  }
+  
+}//func
 
 async setPosts(){
 if(!this.posts$){
@@ -475,6 +443,16 @@ homeState.href = this.config.HOSTNAME + homeState.url;
 return homeState;
 }//func
 
+/**
+ * 
+ * @param {*} username 
+ * @param {*} isInit 
+ * @returns 
+ */
+getLoginState(username,isInit,nextState=null){
+let loginState = {component:'login',username:username,url:`/app/${username}/login`,isInit:isInit,nextState:nextState};
+return loginState
+}//func
 /**
  * 
  * @param {string} username 

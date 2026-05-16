@@ -14,47 +14,146 @@ export class Dashboard{
 constructor(main, state){
 this.main = main;
 this.state = state;
+this.adminUser = this.main.utils.getCache('user');
+this.isTenant = this.adminUser.topRole == 'ADMIN';
 ///
 this.child = null;
 this.idsToDelete = [];
 
 this.title = "Dashboard";
 document.title = "Dashboard";
+
 this.getTemplate();
 }//
 
 getTemplate(){
-  let $this = this;
-  this.dashboardComponent = this.main.pbu.query('#dashboardComponent').cloneNode(true);
-  this.replace = this.main.pbu.query('#replace');
-  this.main.pbu.replace(this.replace,this.dashboardComponent);
-  this.dashboardReplace =  this.dashboardComponent.querySelector('#dashboardReplace');
-  //
-  this.clientHome = this.dashboardComponent.querySelector('#leftSidebar .sp-home-link');
-  this.clientHome.href= '/'+this.state.username;
+let $this = this;
+//this.promptModalSection = this.dashboardComponent.querySelector('section.promptModalSection');
 
-  this.sidebarlinks = this.dashboardComponent.querySelectorAll('#leftSidebar .sp-admin-link');
-  for(let link of this.sidebarlinks){
-  let href = `/app/${this.state.username}${link.getAttribute('data-href')}`;
-  link.href = href;
-  //link.setAttribute('data-href',href);
-}//for
+///
+this.dashboardComponent = this.main.pbu.createElement('main',['dashboard-component']);
+this.dashboardComponent.innerHTML = 
+`
+<main class="dashboard position-relative dashboard-component container-fluid p-0">
+        <header class="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow" data-bs-theme="dark">
+  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="/${this.state.username}">${this.state.username}</a>
 
-this.signoutLink = this.dashboardComponent.querySelector('#leftSidebar #signoutLink');
+  <ul class="navbar-nav flex-row d-md-none">
+    <li class="nav-item text-nowrap">
+      <button class="nav-link px-3 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSearch" aria-controls="navbarSearch" aria-expanded="false" aria-label="Toggle search">
+        <svg class="bi"><use xlink:href="#search"/></svg>
+      </button>
+    </li>
+    <li class="nav-item text-nowrap">
+      <button class="nav-link px-3 text-white" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+        <svg class="bi"><use xlink:href="#list"/></svg>
+      </button>
+    </li>
+  </ul>
+
+  <div id="navbarSearch" class="navbar-search w-100 collapse">
+    <input class="form-control w-100 rounded-0 border-0" type="text" placeholder="Search" aria-label="Search">
+  </div>
+</header>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="sidebar border border-right col-md-3 col-lg-2 p-0 bg-body-tertiary">
+      <div class="offcanvas-md offcanvas-end bg-body-tertiary" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="sidebarMenuLabel">Company name</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto">
+          <ul class="nav flex-column sp-admin-menu">
+           
+          </ul>
+
+
+          <hr class="my-3">
+
+          <ul class="nav flex-column mb-auto">
+            <li class="nav-item">
+              <a id="signout" type="button" class="nav-link d-flex align-items-center gap-2">
+                <i class="bi bi-person"></i>
+                Sign out
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h3>Dashboard<span class="m-x sp-component-title"></span></h3>
+      </div>
+      <section class="position-relative my-2">
+      <section class="position-absolute z-10" style="left: 30vw;top: -40px;">
+      <div class="d-flex align-items-center justify-content-center">
+      <div id="dashboardNotification" class="notification"></div>
+      </div>
+      </section>
+      </section>
+      
+      <div id="dashboardReplace">
+  
+      </div>
+    </main>
+	 
+</div>
+  </div>
+</div>
+
+<section id="promptModalSection"></section>
+
+      </main>
+`;
+this.replace = this.main.pbu.query('#replace');
+this.main.pbu.replace(this.replace,this.dashboardComponent);
+this.dashboardReplace =  this.dashboardComponent.querySelector('#dashboardReplace');
+this.signoutLink = this.dashboardComponent.querySelector('a#signout');
+this.adminMenu = this.dashboardComponent.querySelector('ul.sp-admin-menu'); 
+this.componentTitle = this.dashboardComponent.querySelector('span.sp-component-title');
+
+let adminMenuItems = [
+{name:'Dashboard',url:`/app/${this.state.username}/dashboard/page/detail/0`,icon:'bi-menu-button'},
+{name:'Settings',url:`/app/${this.state.username}/option/page/detail/0`,icon:'bi-menu-button',isTenant:true},
+{name:'Menu',url:`/app/${this.state.username}/menu/page/list/0`,icon:'bi-menu-button',isTenant:true},
+{name:'Users',url:`/app/${this.state.username}/user/page/list/0`,icon:'bi-person',isTenant:true},
+{name:'Pages',url:`/app/${this.state.username}/post/page/list/0`,icon:'bi-person',isTenant:true},
+
+{name:'Posts',url:'#',icon:'bi-person',children:
+[{name:'All Posts',url:`/app/${this.state.username}/post/post/list/0`,icon:'bi-person'},{name:'Categories',url:`/app/${this.state.username}/category/post/list/0`,icon:'bi-person'}]},
+
+{name:'Products',url:'#',icon:'bi-person',children:
+[{name:'All Products',url:`/app/${this.state.username}/post/product/list/0`,icon:'bi-person'},{name:'Categories',url:`/app/${this.state.username}/category/product/list/0`,icon:'bi-person'}]},
+
+];
+
+if(! this.isTenant){
+  adminMenuItems = adminMenuItems.filter(m=>! m.isTenant);
+}
+
+for(let m of adminMenuItems ){
+let li = this.main.pbu.createElement('li',['nav-item']);
+li.innerHTML = `<a type="button" href="${m.url}" class="sp-route-link sp-admin nav-link d-flex align-items-center gap-2><i class="bi ${m.icon}"></i>${m.name}</a> `;
+  if(m.children){
+li.innerHTML = `<a type="button"  class="px-0 nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi ${m.icon}"></i>${m.name}</a>`;
+    this.main.pbu.addClass(li,['dropdown']);
+    let subUl = this.main.pbu.createElement('ul',['dropdown-menu']);
+    li.appendChild(subUl);
+    for(let c of m.children){
+      this.main.pbu.appendChild(subUl,`<li><a type="button" href="${c.url}" class="dropdown-item sp-route-link sp-admin nav-link" ><i class="bi ${c.icon}"></i>${c.name}</a></li>`);
+    }
+  }
+  this.main.pbu.appendChild(this.adminMenu,li);
+}
+///
 addEvents();
 //finally
-//this.mount(this.dashboardComponent);
-
- 
 function addEvents(){
-  //prevent dropdown from responding to clicks
-  let dropdownToggles = $this.dashboardComponent.querySelectorAll('#leftSidebar .dropdown-toggle');
-  for(let dt of dropdownToggles){
-    $this.main.pbu.listen(dt,'click',(e)=>{
-  e.preventDefault();
-});
-  }
-
 $this.main.pbu.listen($this.signoutLink,'click',async(e)=>{
 e.preventDefault();
 let state = $this.main.utils.clone($this.state);
@@ -62,7 +161,9 @@ state.link = $this.main.fu.getApi($this.state.username,true,'logout');
 state.method = 'POST';
 let r = await $this.main.fu.fetch(state);
 if(r==true){
-$this.main.navigate({component:'login',url:'/app/login'});
+localStorage.clear();
+$this.main.navigate($this.main.getLoginState($this.state.username,false));
+window.location.reload();
 }
 });
 
@@ -80,7 +181,7 @@ for(let link of links){
   this.main.pbu.listen(link,'click',(e)=>{
     e.preventDefault();
     let state;
-    if(link.classList.contains('sp-admin-link')){
+    if(link.classList.contains('sp-admin')){
       state = this.main.getState(e,true);
       this.main.navigate(state);
     }else if(link.classList.contains('sp-detail')){
@@ -135,35 +236,28 @@ console.log(this.idsToDelete);
 }//for
 }//func
 
+
 /**
  * 
  * @param {any} state 
  */
 async mount(state){
 let template = await this.process(state);
-  //fix later
-  if(!template){
-    this.main.utils.notify("Template not found",2,'s');
-    return;
-  }
-let div = this.main.pbu.createElement('div');
-div.innerHTML=
-`
-<section class="position-relative my-2">
-<section class="position-absolute z-10" style="left: 30vw;top: -40px;">
-<div class="d-flex align-items-center justify-content-center">
-<div id="dashboardNotification" class="notification"></div>
-</div>
-</section>
-</section>
-
-<section id="mountPoint"></section>
-`;
-let mountPoint = div.querySelector('#mountPoint');
-this.main.pbu.appendChild(mountPoint,template);
-this.getTemplate();
-this.main.pbu.replace(this.dashboardReplace,div);
+this.main.pbu.replace(this.dashboardReplace,template);
 this.addRouteEvents(template);
+this.componentTitle.textContent = ` - ${this.main.utils.capitalize(state.component)} - ${this.adminUser.topRole}`;
+}//func
+
+
+/**
+ * 
+ * @param {any} child 
+ * @param {any} state
+ */
+setChild(child,state){
+this.child = child;
+this.child.state = state;//important, otherwise old state of object will be used when reusing object
+this.child.parent = this;
 }//func
 
 /**
@@ -171,121 +265,45 @@ this.addRouteEvents(template);
  * @param {any} state 
  * @returns 
  */
+
 async process(state){
-  let r;
-  let stateObject = state.stateObject;
+state.stateObject = state.stateObject || await this.main.fu.fetch(state);
+console.log("stateObject");
+console.log(state.stateObject);
   switch(state.component){
     case 'option':
-      if(!this.option){
-      this.option = new Option(this.main,state);
-      }
-      //if there is an existing instance, update the state object
-     this.child = this.option;
-     this.child.state = this.option.state = state;
-     //now process
-     this.option.option$ = state.stateObject || await this.main.fu.fetch(state);
-    console.log(this.option.option$);
-    return this.option.getTemplate();
-      //break;
+      this.option = this.option || new Option(this.main,state);
+      this.setChild(this.option,state);
+      break;
 /// ########## MENU ##############
     case 'menu':
-      if(!this.menu){
-      this.menu = new Menu(this.main,state);
-      }
-     this.child = this.menu;
-     this.child.state = this.menu.state = state;
-     //now proces
-
-if(state.type=='list'){
-  this.menu.menus$ = state.stateObject || await this.main.fu.fetch(state);
-    await this.menu.setDisplay();
-    return this.menu.getListTemplate();
-}else{
-  //not list
-this.menu.menuBuildData$ = stateObject || await this.main.fu.fetch(state);
-if(state.type=='new' && state.id==-1){
-this.menu.menu$ = this.menu.getNewMenu();
-}else if(state.type=='edit'){
-this.menu.menu$ = this.menu.menuBuildData$.menu;
-}
-return this.menu.getFormTemplate();
-}
-      //break;
+    this.menu = this.menu || new Menu(this.main,state);
+    this.setChild(this.menu,state);
+    break;
     case 'user':
-         /// ########## USER ##############
-if(!this.user){
-this.user = new User(this.main,state);
-}
-//
-this.child = this.user;
-this.child.state = this.user.state = state;
-if(state.type=='list'){
-this.user.users$ = state.stateObject || await this.main.fu.fetch(state);
-console.log('users$');
-console.log(this.user.users$);
-await this.user.setDisplay();
-return this.user.getListTemplate();
-}else{
-    //not list
-if(state.type=='new' && state.id==-1){
-this.user.user$ = this.user.getNewUser();
-}else if(state.type=='edit'){
-this.user.user$ = stateObject || await this.main.fu.fetch(state);
-}//#edit
-return this.user.getFormTemplate();
-}
-        //break;
+/// ########## USER ##############
+this.user = this.user || new User(this.main,state);
+this.setChild(this.user,state);
+  break;
  /// ########## CATEGORY ##############
     case 'category':
-      if(!this.category){
-      this.category= new Category(this.main,state);
-      }
-     this.child = this.category;
-     this.child.state = this.category.state = state;
-     //now process
-      if(state.type=='list'){
-this.category.categories$ = stateObject || await this.main.fu.fetch(state);
-return this.category.getListTemplate();
-
-}else{
-if(state.type=='new' && state.id==-1){
-this.category.category$ = this.category.getNewCategory();
-}else if(state.type=='edit'){
-this.category.category$ = stateObject || await this.main.fu.fetch(state);
-}
-return this.category.getFormTemplate()
-}
-      //break;
+     this.category = this.category || new Category(this.main,state);
+      this.setChild(this.category,state);
+      break;
+     /// ########## POST ##############
     case 'post':
-  if(!this.post){
-      this.post= new Post(this.main,state);
-    }
-     this.child = this.post;
-     this.child.state = this.post.state = state;
-     //now process
-this.post.postDto = state.stateObject || await this.main.fu.fetch(state);
-console.log("postDto");
-console.log(this.post.postDto);
-if(state.type=='list'){
-/// set main post to enable update and availability
-this.main.posts$ = this.post.postDto.posts;
-this.main.categories$ = this.post.postDto.categories;
-this.main.categoryTitles = this.main.categories$.map(c=>c.title);
-///
-//set own post in setDisplay()
-return await this.post.getListTemplate();
-}else{
-    //not list
-if(state.type=='new' && state.id==-1){
-this.post.post$ = this.post.getNewPost();
-}else if(state.type=='edit'){
-this.post.post$ = this.post.postDto.posts[0];
-}
-return await this.post.getFormTemplate();
-}
-      //break;
+  this.post= this.post || new Post(this.main,state);
+    this.setChild(this.post,state);
+    break;
   }//switch
-
+  //finally
+if(state.type=='list'){
+return await this.child.getListTemplate();
+}else if(state.type=='new' || state.type=='edit'){
+return await this.child.getFormTemplate();
+}else{
+return await this.child.getTemplate();
+}
 }//func
 
 /**
@@ -341,11 +359,13 @@ updatedItems.push(i);
 }//for
 this.child.setItems(updatedItems);
 this.idsToDelete = [];
-this.main.mh.deleteFromServer({items:deletedItems});
-let template = this.child.getListTemplate();
-//maybe unsubscribe here
-this.mount(template);
+this.child.setListTable();
 this.main.utils.notify("Deleted",0,'s');
+this.main.mh.deleteFromServer({items:deletedItems,component:this.child.title});
+//let template = await this.child.getListTemplate();
+//maybe unsubscribe here
+//this.mount(template);
+
 }
 modal.dismiss.click();
 });

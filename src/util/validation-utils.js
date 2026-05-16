@@ -145,7 +145,7 @@ switch(type){
             }
             }
             if(valid){
-                    el.setAttribute('data-href',u.href);
+                    el.setAttribute('data-path',u.pathname);
                 }
         } catch(error) {
             valid = false;

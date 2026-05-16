@@ -12,68 +12,67 @@ export class Post{
 constructor(main,state){
 this.main = main;//used when using this component to create another
 this.state = state;
-console.log("main in post");
-console.log(this.main);
 //let controller = new AbortController();
-//
-/**@type {any|null}*/this.postDto = null;//admin
 /**@type {any|null}*/this.postViewDto = null;//guest
 /**@type {number}*/this.homePageId;
 /**@type {any[]|null}*/this.posts$ = null;
-/**@type {any[]|null}*/this.displayPosts = [];
 /**@type {any|null}*/this.post$ = null;
 //list
 /**@type {any[]|null}[*/this.categories$ = null;
 /**@type {any|null}*/this.category$ = null;
 /**@type {string[]}*/this.categoryTitles = [];
 //
-/**@type {string[]}*/this.postTags = [];
-/**@type {string[]}*/this.allTags = [];
-
-
-//
+/**@type {string[]|null}*/this.postTags = null;
+/**@type {string[]|null}*/this.allTags = null;
 //used components
 /**@type {any}*/this.pb = new PageBuilder(this.main,this);//pageBuilder
 this.widget = new Widget(main,this);
 this.title = "post";
 this.headerTemplate = null;
 this.footerTemplate = null;
-//this.reRender = false;
 this.isView = false;//??
 //Filtering
-this.categoryFilterTerm = 'All';
-this.statusFilterTerm = 'All';
+this.categoryFilterTerm = 'all';
+this.statusFilterTerm = 'all';
 //displaying archives
 this.archiveTitle = '';
 /**@type {any[]|null}*/this.postArchive$ = null;
 //for troubleshooting
 this.count = 0;
+this.subscribeText = 'If you have not yet subscribed to our newsletter, kindly do so today.';
 }//
 
 async setDisplay(){
-    //step 1
-if(!this.postDto){
-let state = this.main.utils.clone(this.state);
-let r = await this.main.fu.fetch(state);
-if(r){
-    this.postDto= r;
-    if(this.state.type=='list'){
-    this.posts$ = this.postDto.posts;
+   //step 1
+if(this.state.stateObject){
+//this.posts$ = this.stateObject.posts;??
+if(this.state.type=='list'){
+    this.posts$ = this.state.stateObject.posts;
+    //note: categories is sent wether list or new or edit
     }else if(this.state.type=='new'){
         this.post$ = this.getNewPost();
     }else if(this.state.type=='edit'){
-        this.post$ = this.postDto.posts[0];
+        this.post$ = this.state.stateObject.post;
+        this.postTags = (this.post$.tags)?this.post$.tags.split(this.main.config.SPLITTER).map(t=>this.main.utils.capitalize(t)):[];
     }
-}
-}
-//step 2
-if(this.postDto){
-//all posts were initially retrieved including pages
-this.posts$ = this.postDto.posts.filter(p=>p.postType==this.state.postType);
-this.displayPosts = this.posts$;
-this.categories$ = this.postDto.categories;
+////step 2
+this.categories$ = this.state.stateObject.categories;
 this.categoryTitles = this.categories$.map(c=>c.title);
-this.allTags = this.postDto.allTags;
+this.allTags = this.state.stateObject.allTags.map(t=>this.main.utils.capitalize(t));
+//
+for(let p of this.posts$){
+    //set category
+    for(let c of this.categories$){
+        if(p.categoryId==c.id){
+            p.category = c;
+            break;
+        }
+    }
+    //set author
+}
+
+console.log("this.posts$");
+console.log(this.posts$);
 }
 
 }//func
@@ -88,12 +87,11 @@ let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
 console.log("postViewDto");
-console.log(this.postDto);
-this.main.viewCache.option = this.postViewDto.option;
-this.main.viewCache.menus = this.postViewDto.menus;
+console.log(this.postViewDto);
+
 this.headerTemplate = await this.getMenuTemplate('main');
 this.footerTemplate = await this.getMenuTemplate('footer');
-this.main.setTheme(this.main.viewCache.option.activeTheme);
+this.main.setTheme(this.postViewDto.option);
 if(state.isArchive){
 this.getArchive();
 }else{
@@ -149,7 +147,7 @@ sidebarType:"NONE"
 };
 let postDetail = await this.getDetailTemplate();
 let mainContentDiv = postDetail.querySelector('div.main-content');
-let recentPostsWidget = await this.widget.getRecentPostsWidget({inSidebar:false,l:this.posts$.length,cat:category.title,we:true,wi:true,wm:false});
+let recentPostsWidget = await this.widget.getRecentPostsWidget({l:this.posts$.length,cat:category.id,we:true,wi:true,wm:false});
 let description = `<p>${category.description}</p>`;
 this.main.pbu.appendChild(mainContentDiv,description,recentPostsWidget.querySelector('[m]'));
 this.main.pbu.mount(postDetail);
@@ -185,7 +183,7 @@ this.main.pbu.appendChild(this.postFormSection,
 <section>
 <div class="container">
 <header class="my-2">
-<a type="button" href="/app/${this.state.username}/post/${this.state.postType}/new/-1" class="btn btn-primary new-post sp-link sp-admin-link sp-route-link">Add ${this.state.postType} </a> 
+<a type="button" href="/app/${this.state.username}/post/${this.state.postType}/new/-1" class="btn btn-primary new-post sp-admin sp-route-link">Add ${this.state.postType} </a> 
 </header>
 
 <div class="filter filter-by-status w-25">
@@ -196,13 +194,14 @@ this.main.pbu.appendChild(this.postFormSection,
 </ul>
 </div>
 
-<div class="filter filter-by-category w-25">
+<div class="filter filter-by-category w-25 ${this.main.pbu.showIf(isPost )}">
 <p>Filter by category</p>
+${this.main.pbu.createSelectElement({value:this.categoryFilterTerm,default:'All',postItems:[...this.categories$],clasz:['filter-by-category'],serialize:true})}
 </div>
 
 <div class="d-flex justify-content-end">
 <form class="row g-3">
-<div class="col-auto">
+<div class="col-auto sp-form-control">
 <input class="form-control search-term" placeholder="search">
 </div>
 <div class="col-auto">
@@ -212,26 +211,23 @@ this.main.pbu.appendChild(this.postFormSection,
 </div>
 
 <section class="list-table post-list-table"></section>
+
 </section>
 `
 );
-//
-this.filterPostsByCategoryDiv = this.postFormSection.querySelector('.filter-by-category');
+//only for postType = post
+this.filterPostsByCategoryDiv = null;
+this.filterPostsByCategorySelector = null;
 this.searchTermControl = this.postFormSection.querySelector('input.search-term');
 this.searchPostsButton = this.postFormSection.querySelector('#searchPostsButton');
 this.postListTableSection = this.postFormSection.querySelector('.post-list-table'); 
-//
-$this.main.pbu.appendChild($this.filterPostsByCategoryDiv,
-$this.main.pbu.createSelectElement({id:"filterPostsByCategory",title:"",value:$this.categoryFilterTerm,items:['All',...$this.categoryTitles]})
-);
-//
-this.filterPostsByCategorySelector = this.postFormSection.querySelector('#filterPostsByCategory');
+
 //now
 updateView();
 addEvents();
 return this.postFormSection;
 function updateView(){
-$this.setListTable();
+$this.setListTable(null);
 ///
 }//inner
 function addEvents(){
@@ -249,47 +245,24 @@ $this.main.pbu.listen(cs,'click',()=>{
 });
 }//for
 //
+if(isPost){
+$this.filterPostsByCategoryDiv = $this.postFormSection.querySelector('.filter-by-category');
+$this.filterPostsByCategorySelector = $this.postFormSection.querySelector('select.filter-by-category');
 $this.main.pbu.listen($this.filterPostsByCategorySelector,'change',()=>{
-    $this.filterPosts($this.filterPostsByCategorySelector.value,'category');
+    let categoryFilterTerm = $this.filterPostsByCategorySelector.options[$this.filterPostsByCategorySelector.selectedIndex].text;
+    $this.filterPosts(categoryFilterTerm,'category');
 });
+}
+
 //
 $this.main.pbu.listen($this.searchPostsButton,'click',()=>{
     let searchTerm = $this.searchTermControl.value;
     //validate();
-    $this.searchPosts(searchTerm);
+    $this.searchPostList(searchTerm);
 });
 //
 
 }//inner
-}//func
-setListTable(){
-let isPost = this.state.postType=='post';
-let titles = ["Title","Category","Excerpt","Post Type","Status"];
-if(!isPost){
-    titles = ["Title","Status"];
-}
-let items = [];
-for(let p of this.displayPosts){
-let i = {
-id:p.id,
-href:`/${this.state.username}/${p.title}/${p.id}`,
-titles:[p.title,p.categoryTitle,(p.excerpt)?p.excerpt.substring(0,20)+'...':'',p.postType,p.contentStatus],
-editHref:`/app/${this.state.username}/post/${this.state.postType}/edit/${p.id}`,
-deleteHref:``
-};
-if(!isPost){
-    i = {
-    id:p.id,
-    href:`/${this.state.username}/${p.title}/${p.id}`,
-    titles:[p.title,p.contentStatus],
-    editHref:`/app/${this.state.username}/post/${this.state.postType}/edit/${p.id}`,
-    deleteHref:``
-};
-}
-items.push(i);
-}//for
-let menuTable = this.main.pbu.createTable({username:this.state.username,titles:titles,posts:items});
-this.main.pbu.replace(this.postListTableSection,menuTable);
 }//func
 async getFormTemplate(){
 await this.setDisplay();
@@ -330,7 +303,7 @@ this.createCategoryButton = this.postCategoriesSection.querySelector('a.create-c
 //Tags
 this.postTagsSection = this.postFormSection.querySelector('section.tags');
 this.postTagsListDiv = this.postTagsSection.querySelector('div.tags');
-this.tagsControl = this.postTagsSection.querySelector('textarea.tags');
+this.tagsControl = this.postTagsSection.querySelector('input.tags');
 this.tagsAddButton = this.postTagsSection.querySelector('#postTagsAddButton');
 this.tagIntendedList = this.postTagsSection.querySelector('.tag-intended');//for tags auto-complete
 //sibebar type
@@ -347,9 +320,13 @@ this.isStickyControl = this.isStickySection.querySelector('input.is-sticky');
 //
 this.allowCommentsSection = this.postFormSection.querySelector('section.allow-comments');
 this.allowCommentsControl = this.allowCommentsSection.querySelector('input.allow-comments');
-
+//
+this.showSubscribeSection = this.postFormSection.querySelector('section.show-subscribe');
+this.showSubscribeControl = this.showSubscribeSection.querySelector('input.show-subscribe');
+//
 updateView();
 addEvents();
+$this.checkRoles();
 return this.postFormSection;
 async function updateView(){
 //title
@@ -359,6 +336,7 @@ $this.postTitleControl = $this.postForm.querySelector('#title');
 $this.main.pbu.appendChild($this.contentStatusDiv,
 $this.main.pbu.createCheckedInputElement({id:"contentStatus",value:p.contentStatus,type:'radio',items:$this.main.config.CONTENT_STATUS}),
 );
+
 //
 if($this.state.postType=='product'){
 $this.main.pbu.show($this.productDataDiv);
@@ -375,11 +353,7 @@ $this.main.pbu.show($this.postTagsSection);
 $this.renderTags();
 $this.main.pbu.show($this.isFeaturedSection,$this.isStickySection,$this.allowCommentsSection);
 //featured image
-//$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(p.featuredImageUrl,'grid'),width:"72", height:"57"});
-$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:(p.featuredImageUrl)?$this.main.mh.getImageUrl(p.featuredImageUrl,'grid'):''});
-// if(p.featuredImageUrl){
-//     $this.main.pbu.show($this.featuredImageTemplate.originalButton);
-// }
+$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(p.featuredImageUrl,'grid')});
 //cant use an icon as featured image
 $this.featuredImageTemplate.insertIcon.remove();
 $this.main.pbu.appendChild($this.featuredImageSection,$this.featuredImageTemplate.div);
@@ -392,10 +366,11 @@ $this.sidebarTypeSelector = $this.sidebarTypeSection.querySelector('#sidebarType
 //sidebarWidgets
 $this.getSidebarWidgets();
 //input
-$this.pb.isView = false;
+$this.pb.isView = $this.widget.isView = false;
 $this.pb.pbInput = $this.post$.mainContent;
 let template = await $this.pb.getTemplate($this.state.type);
 $this.main.pbu.replace($this.mainContentDiv,template);
+
 }//inner
 function addEvents(){
 $this.main.pbu.listen($this.excerptButton,'click',()=>{
@@ -420,11 +395,11 @@ $this.main.pbu.listen($this.tagsAddButton,'click',()=>{
     $this.addNewTag();
 });
 $this.main.pbu.listen($this.tagsControl,'input',()=>{
-    $this.autoCompleteTag();
+    //$this.autoCompleteTag();
+    $this.autoComplete($this.tagsControl,false,'tag');
 });
-$this.main.pbu.listen($this.tagsControl,'blur',()=>{
-    $this.tagIntendedList.innerHTML = '';
-});
+
+
 //sidebar
 
 $this.main.pbu.listen($this.sidebarTypeSelector,'change',()=>{
@@ -456,10 +431,10 @@ ${this.main.pbu.outerHTML(this.headerTemplate?this.headerTemplate:this.getMenuTe
 <!--Post title and feature image-->
 <div class="cover ${this.main.pbu.showIf(p.slug!='home')} ${this.main.pbu.addClassIf(!p.featuredImageUrl,['p-4', 'p-md-5','mb-4','rounded','text-body-emphasis', 'bg-body-secondary'])}">
   <div class="featured-image ${this.main.pbu.showIf(p.featuredImageUrl)}">
-      <p><img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="img-thumbnail featured-image"/></p>
+      <img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="featured-image d-block mx-auto"/>
     </div>
   <div class="px-0">
-    <h1 class="display-4 fst-italic title">${p.title}</h1>
+    <h1 class="display-4 fst-italic title text-center">${p.title}</h1>
   </div>
   
 </div><!--#Post title and feature image-->
@@ -470,6 +445,10 @@ ${this.main.pbu.outerHTML(this.headerTemplate?this.headerTemplate:this.getMenuTe
   
 <div class="main-content">
 </div>
+
+<div class="subscribe">
+</div>
+
   </div>
 <!--Right sidebar-->
   <div class="sidebar position-sticky ${this.main.pbu.showIf(p.sidebarType!='NONE')}
@@ -480,12 +459,15 @@ ${this.main.pbu.outerHTML(this.headerTemplate?this.headerTemplate:this.getMenuTe
   <!--#Right sidebar-->
 </div>
 <!--#Row-->
+<section id="promptModalSection">
+
+</section>
 </main>
 <footer class="footer">
 ${this.main.pbu.outerHTML(this.footerTemplate?this.footerTemplate:this.getMenuTemplate('footer'))}
 </footer>
 <p class="mb-0 float-end">
-  <a href="#">Back to top</a>
+  <a href="/app/${this.state.username}/login">Login</a>
 </p>
 </div>
 <!--#viewContainer-->
@@ -494,6 +476,7 @@ ${this.main.pbu.outerHTML(this.footerTemplate?this.footerTemplate:this.getMenuTe
 
 this.mainContentDiv = this.postDetailSection.querySelector('div.main-content');
 this.sidebarDiv = $this.postDetailSection.querySelector('div.sidebar');
+this.subscribeDiv = $this.postDetailSection.querySelector('div.subscribe');
 
 if(!this.state.isArchive){
 await updateView();
@@ -502,10 +485,16 @@ console.log(this.postDetailSection.outerHTML);
 return this.postDetailSection;
 
 async function updateView(){
-$this.pb.isView = true;
+$this.pb.isView = $this.widget.isView = true;
 $this.pb.pbInput = $this.post$.mainContent;
 let responseDiv = await $this.pb.initilizePageBuilder($this.state.type);
 $this.main.pbu.replace($this.mainContentDiv,responseDiv);
+//subscription
+if(p.showSubscribe && ! $this.main.utils.genCookie(false,$this.state.username)){
+let cta = $this.pb.getCtaComponent({type:'detail',v:{headingText:'SUBSCRIBE',bodyText:$this.subscribeText,bText:'SUBSCRIBE'},dClass:[],bclasz:['subscribe']});
+let p = cta.querySelector('[p]');
+$this.main.pbu.replace($this.subscribeDiv,p);
+}
 //add widgets to sidebar
 /**@type {any[]}*/let sidebarWidgets = JSON.parse($this.post$.sidebarWidgets)||[];
     for(let w of sidebarWidgets){
@@ -534,17 +523,17 @@ async getMenuTemplate(slug,clasz=[]){
         nav.innerHTML = 
     `
     <div class="container-fluid">
-    <a class="${this.main.pbu.showIf(this.main.viewCache.option.logoUrl)} sp-detail sp-slug-link me-2" data-slug="home" href="/${this.state.username}"><img width="60" height="60" src="${this.main.viewCache.option.logoUrl}" /></a>
-    <a class="nav-link sp-nav-link sp-site-title sp-detail sp-slug-link" data-slug="home" href="/${this.state.username}">${this.main.viewCache.option.siteName}</a>
+    <a class="${this.main.pbu.showIf(this.postViewDto.option.logoUrl)} sp-detail sp-slug-link me-2" data-slug="home" href="/${this.state.username}"><img width="60" height="60" src="${this.main.mh.getImageUrl(this.postViewDto.option.logoUrl,'public')}" /></a>
+    <a class="nav-link sp-nav-link sp-site-title sp-detail sp-slug-link" data-slug="home" href="/${this.state.username}">${this.postViewDto.option.siteName}</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
       </ul>
-      <form class="d-flex search-post position-relative" role="search">
+      <form class="d-flex search-post auto-complete position-relative" role="search">
         <input class="form-control me-2 search-post" type="search" placeholder="Search" aria-label="Search"/>
-        <button class="btn sp-btn search-post" type="button">Search</button>
+        <button class="btn btn-primary search-post" type="button">Search</button>
       </form>
     </div>
   </div>
@@ -560,7 +549,7 @@ async getMenuTemplate(slug,clasz=[]){
     }
     
 let menuUl = nav.querySelector('.navbar-nav');
-let theMenu = this.main.viewCache.menus.filter(m=>m.slug==slug)[0];
+let theMenu = this.postViewDto.menus.filter(m=>m.slug==slug)[0];
 if(theMenu.menuItems){
 let menuItems = JSON.parse(theMenu.menuItems);
 let navItem,navLink;
@@ -610,6 +599,54 @@ for(let m of menuItems){
 }
 return nav;
 }//func
+/**
+ * 
+ * @param {any|null} posts 
+ */
+setListTable(posts=null){
+let isPost = this.state.postType=='post';
+let titles = ["Title","Category","Author","Post Type","Status"];
+if(!isPost){
+    titles = ["Title","Status"];
+}
+let items = [];
+let displayPosts = (posts)?posts: this.posts$.filter(p=>p.postType==this.state.postType);
+for(let p of displayPosts){
+let i = {
+id:p.id,
+href:`/${this.state.username}/${p.title}/${p.id}`,
+titles:[p.title,(p.category?.title)?p.category.title:'None',(p.author)?p.author.firstName:'',p.postType,p.contentStatus],
+editHref:`/app/${this.state.username}/post/${this.state.postType}/edit/${p.id}`,
+deleteHref:``
+};
+if(!isPost){
+    i = {
+    id:p.id,
+    href:`/${this.state.username}/${p.title}/${p.id}`,
+    titles:[p.title,p.contentStatus],
+    editHref:`/app/${this.state.username}/post/${this.state.postType}/edit/${p.id}`,
+    deleteHref:``
+};
+}
+items.push(i);
+}//for
+let menuTable = this.main.pbu.createTable({username:this.state.username,titles:titles,posts:items});
+this.main.pbu.replace(this.postListTableSection,menuTable);
+}//func
+
+async checkRoles(){
+if(this.parent.adminUser.topRole=='CONTRIBUTOR'){
+    let contentStatusInput = this.contentStatusDiv.querySelectorAll('input');
+    for(let input of contentStatusInput){
+        input.removeAttribute('checked');
+        input.setAttribute('disabled','disabled');
+        if(input.value=='DRAFT'){
+            input.setAttribute('checked','checked');
+        }
+    }
+    
+}
+}//func
 
 addViewEvents(){
 let detailLinks = this.main.pbu.queryAll('a.sp-detail'); 
@@ -628,13 +665,14 @@ for(let link of detailLinks){
 let searchForm = this.main.pbu.query('form.search-post');
 let searchControl = searchForm.querySelector('input.search-post');
 let searchButton = searchForm.querySelector('button.search-post');
+
 this.main.pbu.listen(searchControl,'input',()=>{
-    this.main.utils.searchPosts(searchControl,true);
+    this.autoComplete(searchControl,true,'post');
 });
 //
 this.main.pbu.listen(searchButton,'click',()=>{
     if(searchControl.value){
-        this.main.utils.searchPosts(searchControl,true);
+        this.autoComplete(searchControl,true,'post');
     }
     
 });
@@ -645,6 +683,83 @@ for(let form of forms){
     this.processForms(form);
 }
 //
+//subscribe
+let subscribeButtons = this.main.pbu.queryAll('a.subscribe')||[];
+for(let button of subscribeButtons){
+    this.main.pbu.listen(button,'click',(e)=>{
+    e.preventDefault();
+    button.removeAttribute('href');
+    let form = this.main.pbu.createElement('form',['subscribe']);
+    form.innerHTML = 
+    `
+    ${this.main.pbu.createFormControl({serialize:true,title:"Name",placeholder:"Name",clasz:['name','sp-validation-required']})}
+    ${this.main.pbu.createFormControl({serialize:true,title:"Email",placeholder:"Email",type:"email",clasz:['email','sp-validation-required']})}
+    <a class="btn btn-primary w-100 my-2 sp-button" type="button">Subscribe</a>
+    `
+    let nameControl = form.querySelector('input.name');
+    let emailControl = form.querySelector('input.email');
+    let subscribeButton = form.querySelector('.sp-button');
+    let modal = this.main.utils.setModal('SUBSCRIBE',form);
+    modal.confirm.remove();
+    modal.cancel.remove();
+    
+    this.main.pbu.listen(subscribeButton,'click',async ()=>{
+        modal.init();
+      //validate title
+      if(!this.main.vu.validate(form.querySelectorAll('input.sp-validation'))){
+        return;
+      }
+      //
+      let state = this.main.utils.clone(this.state);
+      this.subscriber = {
+        firstName:nameControl.value,/**important,to enable binding on backend */
+        email: emailControl.value
+        };
+      
+      state.link = this.main.fu.getApi(state.username,false,'exists');
+      state.body = this.subscriber.email;
+      state.notice = modal.notice;
+      let r = await this.main.fu.fetch(state);
+        if(r=='exists'){
+            //you ve already subscribed
+            this.main.pbu.addClass(button,['disabled']);
+            this.main.utils.genCookie(true,state.username);
+            this.main.pbu.replace(form,'Thank you for subscribing');
+        }else{
+        this.authToken= r;
+        modal.title.textContent="Please enter the token sent to you";
+        let authTokenTemplate = this.main.tu.authToken();
+        this.main.pbu.replace(form,authTokenTemplate.section);
+        //events
+        this.main.pbu.listen(authTokenTemplate.button,'click',async ()=>{
+            modal.init();
+            if(! this.main.vu.validate(authTokenTemplate.input)){return;}
+            if(authTokenTemplate.input.value==this.authToken){
+                //now save subscriber
+            state.link = this.main.fu.getApi(this.state.username,false,'subscribe');
+            state.body = JSON.stringify(this.subscriber);
+            let r = await this.main.fu.fetch(state);
+            if(r=='ok'){
+                this.main.pbu.addClass(button,['disabled']);
+               this.main.utils.genCookie(true,state.username);
+               this.main.pbu.replace(form,'Thank you for subscribing');
+            }
+                
+
+            }else{
+                this.main.utils.notify('Wrong, please try again',2,'c',modal.notice);
+            }
+        });
+        }
+
+    //   if(r=='ok'){
+    //     form.innerHTML = '<p>Thank You</p>';
+    //   }
+      
+    });
+    });
+    
+}
 }//inner
 /**
  * 
@@ -654,59 +769,61 @@ for(let form of forms){
 filterPosts(filterTerm,type){
     //temporary rememdy for possibly event bubbling.......
     if(!filterTerm){return;}
-    //filterTerm = filterTerm.toLowerCase();
-   //type: category - when filtering post by category
-   //type: status - when filtering post by content status ie publis, draft
-    //let displayPosts = [];
-    //let displayPosts;
+    filterTerm = filterTerm.toLowerCase();
+    type = type.toLowerCase();
+    let displayPosts = this.posts$.filter(p=>p.postType==this.state.postType);
 switch(type){
     case 'category':
         //note
         this.categoryFilterTerm = filterTerm;
-        if(this.categoryFilterTerm=='All'){
-            this.displayPosts = this.posts$;
+        if(this.categoryFilterTerm=='all'){
+            //do nothing
         }else{
-            this.displayPosts = this.posts$.filter(p=>p.categoryTitle==this.categoryFilterTerm);
+            displayPosts = displayPosts.filter(p=>this.categoryFilterTerm==p.category?.title.toLowerCase());
         }
 
-        if(this.statusFilterTerm=="All"){
+        if(this.statusFilterTerm=="all"){
            //do nothing
         }else{
-            this.displayPosts = this.displayPosts.filter(p=>p.contentStatus==this.statusFilterTerm);
+            displayPosts = displayPosts.filter(p=>p.contentStatus.toLowerCase()==this.statusFilterTerm);
         }
         break;
     case 'status':
         //note
         this.statusFilterTerm = filterTerm;
-        if(this.statusFilterTerm=='All'){
-            this.displayPosts = this.posts$;
+        if(this.statusFilterTerm=='all'){
+            //do nothing
         }else{
-            this.displayPosts = this.posts$.filter(p=>p.contentStatus==this.statusFilterTerm);
+            displayPosts = displayPosts.filter(p=>p.contentStatus.toLowerCase()==this.statusFilterTerm);
         }
 
-        if(this.categoryFilterTerm=='All'){
+        if(this.categoryFilterTerm=='all'){
             //do nothing
         }else{
             //note: categoryFilterTerm = categoryTitle
-            this.displayPosts = this.displayPosts.filter(p=>p.categoryTitle==this.categoryFilterTerm);
+            displayPosts = displayPosts.filter(p=>p.category?.title.toLowerCase()==this.categoryFilterTerm);
         }
         
         break;
 }//switch
 
-this.setListTable();
+this.setListTable(displayPosts);
 }//func
 
 /**
  * 
  * @param {string} searchTerm 
  */
-searchPosts(searchTerm){
+searchPostList(searchTerm){
+if(!this.main.vu.validate(this.searchTermControl)){
+    return;
+}
+
 let regex = new RegExp(`${searchTerm}`, "i");
-this.displayPosts= this.posts$.filter(i=>regex.test(i.title));
+let displayPosts= this.posts$.filter(i=>regex.test(i.title));
 //reset filter terms
 this.categoryFilterTerm = this.statusFilterTerm =  'All';
-this.setListTable();
+this.setListTable(displayPosts);
 }//func
 
 /**
@@ -770,7 +887,7 @@ addEvents();
  */
 async function showWidget(name = ''){
 let widgets = [];
-let defaultRecentPostsWidget = {m:'recentPosts',v:{inSidebar:true,l:3,cat:'All',we:true,wi:true,wm:true}};
+let defaultRecentPostsWidget = {m:'recentPosts',v:{l:1,cat:-1,we:true,wi:true,wm:true}};
 let defaultWidgets = [defaultRecentPostsWidget];
 //do you have widgets saved already in the post
 /**@type {any[]}*/let selectedSidebarWidgets = JSON.parse($this.post$.sidebarWidgets) || [];//saved
@@ -832,26 +949,31 @@ this.postForm.appendChild(template);
 
 
 
-createCategory(){
+async createCategory(){
+let newCategory;
 let state = this.main.getState(`/app/${this.state.username}/category/${this.state.postType}/new/-1`);
+state.stateObject = this.state.stateObject;
 let categoryComponent = new Category(this.main,state);
 categoryComponent.isPartial = true;
-categoryComponent.category$ = categoryComponent.getNewCategory();
-categoryComponent.categories$ = this.categories$;
-let template = categoryComponent.getFormTemplate();
+let template = await categoryComponent.getFormTemplate();
 categoryComponent.saveCategoryButton.remove();
 let modal = this.main.utils.setModal('New Category',template);
-//modal.confirm.remove();
-//modal.cancel.remove();
+modal.confirm.textContent = 'Save';
 this.main.pbu.listen(modal.confirm,'click',async()=>{
-this.category$ = await categoryComponent.saveCategory();
+categoryComponent.state.notice=modal.notice;  
+newCategory = await categoryComponent.saveCategory();
+if(newCategory){
+    this.main.utils.notify('Saved',0,'c',modal.notice);
+}
 });
 
 this.main.pbu.listen(modal.dismiss,'click',()=>{
-this.post$.categoryTitle = this.category$.title;
-this.post$.categoryId = this.category$.id;
-this.categories$.push(this.category$);
+if(newCategory){
+this.post$.category = newCategory;
+this.categories$.push(newCategory);
 this.renderCategories();
+}
+
 });
 
 }//func
@@ -859,7 +981,7 @@ renderCategories(){
 this.categoryTitles = this.categories$.map(c=>c.title);
 this.postCategoriesDiv.innerHTML = '';
 this.main.pbu.appendChild(this.postCategoriesDiv,
-this.main.pbu.createSelectElement({id:"categoryTitle",value:this.post$.categoryTitle,items:['None',...this.categoryTitles],clasz:['my-2']}));
+this.main.pbu.createSelectElement({id:"categoryTitle",value:this.post$.category?.id,postItems:[...this.categories$],clasz:['my-2'],default:'None'}));
 //handle
 this.categoryTitleSelector = this.postCategoriesDiv.querySelector('#categoryTitle');
 }//func
@@ -889,26 +1011,31 @@ console.log(pcn);
 }//
 //############# TAGS ######################
 renderTags(){
-if(this.post$.tags){
-this.postTags = this.post$.tags.split(this.main.config.SPLITTER);
-}
+this.postTags = this.postTags || [];
 this.postTagsListDiv.innerHTML = ''	;
 for(let t of this.postTags){
 let span = 
 `
-<span class="mx-2">${this.main.utils.capitalize(t)} <i class="bi bi-file-x post-tags-remove" style="cursor: pointer;"></i></span>
+<span class="mx-2">${t} <i class="bi bi-file-x post-tags-remove" style="cursor: pointer;"></i></span>
 `;
 this.main.pbu.appendChild(this.postTagsListDiv,span);
 }//for
 //events
-let removeTags = this.postTagsListDiv.querySelectorAll('.post-tags-remove');
+let removeTags = this.postTagsListDiv.querySelectorAll('i.post-tags-remove');
 for(let el of removeTags){
 this.main.pbu.listen(el,'click',()=>{
-    this.removeTag(el);
+let tag = el.parentElement.textContent.trim();
+this.main.utils.deleteItem(tag,this.postTags);
+el.parentElement.remove();
+console.log("updated posttags");
+console.log(this.postTags);
 });
 }
 }//
 addNewTag(){
+ if(!this.main.vu.validate(this.tagsControl)){
+        return;
+      }
 let newTags = this.tagsControl.value;
 //mini validation
 if(!newTags){
@@ -921,57 +1048,24 @@ return;
 let tags = newTags.trim().split(",");
 for(let tag of tags){
 let t = this.main.utils.capitalize(tag);
+//append
 if(!this.postTags.includes(t)){
 this.postTags.push(t);
 }
-if(!this.allTags.includes(t)){
-this.allTags.push(t);
+if(!this.allTags?.includes(t)){
+this.allTags?.push(t);
 }
 }
 this.tagsControl.value = '';//reset form
 this.renderTags();
 console.log(this.allTags);
 }// #addNewTag()
-/**
- * 
- * @param {HTMLElement} el 
- */
-removeTag(el){
-let tag = el.parentElement.textContent.trim();
-this.main.utils.deleteItem(tag,this.postTags);
-this.renderTags();
-}// removeTag()
-
-autoCompleteTag(){
-let tag = this.tagsControl.value
-if(!tag || tag.length<2){return;}
-let regex = new RegExp(`^${tag}`, "i");
-let allTags = this.allTags.filter(t=>regex.test(t));
-if(allTags.length>0){
-    this.tagIntendedList.innerHTML = '';
-for(let t of allTags){
-        let li = `<li class="list-group-item" style="cursor: pointer;">${t}</li>`
-        this.main.pbu.createElement('li',['list-group-item'],t);
-        this.main.pbu.appendChild(this.tagIntendedList,li);
-    }
-    this.main.pbu.show(this.tagIntendedList);
-let tagLists = this.tagIntendedList.querySelectorAll('li');
-    for(let l of tagLists){
-        this.main.pbu.listen(l,'click',()=>{
-            this.tagsControl.value = l.textContent;
-            this.main.pbu.hide(this.tagIntendedList);
-        });
-    }
-}
-}//func
 
 /**
  * 
  * @param {string} pbMessage 
  */
 async submitPost(pbMessage){
-console.log("main in submit");
-console.log(this.main);
 if(!this.main.vu.required(this.postTitleControl)){
     return;
 }
@@ -980,24 +1074,6 @@ if(this.state.postType=='page' && this.state.type=='new' && this.main.config.RES
     this.main.utils.notify('This title is reserved',1,'d');
     return;
 }
-
-//process featured image
-//let oldImageId;
-let newImageId = await this.main.mh.uploadToServer(this.featuredImageSection.querySelector('div.image-template'));
-// if(newImageId && newImageId !=this.post$.featuredImageUrl){
-//    if(this.post$.featuredImageUrl){
-//     oldImageId = this.main.utils.clone(this.post$.featuredImageUrl);
-//     }
-//     this.post$.featuredImageUrl = newImageId; 
-// }
-
-//process category
-let categoryTitle,categoryId;
-if(this.state.postType!='page'){
-categoryTitle = this.categoryTitleSelector.value;
-categoryId = this.main.utils.getItemIdFromTitle(categoryTitle,this.categories$) || -1;
-}
-
 //process sidebar widgets
 let sidebarWidgets = [];
 if(this.recentPostsWidgetControl.checked){
@@ -1011,9 +1087,8 @@ let m = {
 m:'recentPosts',
 v:{
     m:'recentPosts',
-    inSidebar:true,
     l:l,
-    cat:cat,
+    cat:this.main.utils.isNull(cat)?-1:cat,
     we:we,
     wi:wi,
     wm:wm
@@ -1030,22 +1105,23 @@ slug:title.toLowerCase(),
 mainContent:pbMessage,
 excerpt:this.post$.excerpt,
 postType:this.state.postType,
-featuredImageUrl:newImageId,
+featuredImageUrl:(this.state.postType=='post')?await this.main.mh.uploadToServer(this.featuredImageSection.querySelector('div.image-template')):'',
 keywords:this.post$.keywords,
-tags:this.postTags.join(this.main.config.SPLITTER),
+tags:(this.postTags)?this.postTags.join(this.main.config.SPLITTER):'',
 likes:this.post$.likes,
 views:this.post$.views,
 contentStatus: this.contentStatusDiv.querySelector('input:checked').value,
 allowComments:this.allowCommentsControl.checked,
 isFeatured:this.isFeaturedControl.checked,
 isSticky:this.isStickyControl.checked,
+showSubscribe:this.showSubscribeControl.checked,
 sidebarType:this.sidebarTypeSelector.value,
 sidebarWidgets:JSON.stringify(sidebarWidgets),
-categoryTitle:categoryTitle,//
-categoryId:categoryId,
-category:null
+categoryId:(this.state.postType=='post')?this.categoryTitleSelector.value:null,
+category:null,
+authorId:this.post$.authorId /**important */
 }
-this.main.utils.sign(post);
+this.main.utils.sign(post,this.state);
 //now save post
 console.log('before submit');
 console.log(post);
@@ -1054,7 +1130,7 @@ console.log(state);
 state.body = JSON.stringify(post);
 let r = await this.main.fu.fetch(state);
 if(r>0){
-this.main.utils.notify('Saved',0,'s');
+this.main.utils.notify('Saved',0,'d');
 this.main.mh.deleteFromServer(null);
 this.state = this.main.replaceState(this.post$,this.state,r);
 }
@@ -1069,7 +1145,7 @@ slug:"",
 mainContent:"",
 excerpt:"",
 postType:"",
-contentStatus:"PUBLISH",
+contentStatus:(this.parent.adminUser.topRole=='CONTRIBUTOR')?"DRAFT":"PUBLISH",
 featuredImageUrl:"",
 keywords:"",
 tags:"",
@@ -1080,8 +1156,8 @@ sidebarWidgets: "[]",
 allowComments:false,
 isFeatured:false,
 isSticky:false,
-categoryTitle:'None',
-categoryId:-1,
+showSubscribe:false,
+categoryId:null,
 category:null,
 username:"",
 tenantId:-1,
@@ -1098,8 +1174,100 @@ getItems(){
  * @param {any} items 
  */
 async setItems(items){
-this.posts$ = items;
+this.state.stateObject.posts = items;
 await this.setDisplay();
+}//
+
+/**
+ * 
+ * @param {HTMLInputElement} input 
+ * @param {boolean} isView 
+ */
+async autoComplete(input,isView,type='post'){
+let form = input.closest('form.auto-complete');
+let searchTerm = input.value;
+if(!searchTerm){
+//dynamically created, populated with search
+let div = form.querySelector('.sp-div');
+div?.remove();
 }
+if(!this.main.vu.sanitize([input])){
+    return;
+}
+searchTerm = searchTerm.trim().toLowerCase();
+if(searchTerm.length<2){
+return;
+}
+//let regex = new RegExp(`${searchTerm}`, "i");
+let items;
+switch(type){
+    case 'post':
+        if(isView){
+let state = this.main.utils.clone(this.state);
+state.link = this.main.fu.getApi(state.username,false,`/home/posts/${state.postType}/-1`,[{n:'limit',v:-1}]);
+items = await this.main.fu.fetch(state);
+}else{
+items = [...this.posts$];
+}
+items = items.filter(p=>p.title.toLowerCase().includes(searchTerm));
+        break;
+    case 'tag':
+        items = this.allTags?.filter(t=>t.includes(this.main.utils.capitalize(searchTerm)));
+        break;
+}
+        if(items && items.length>0){
+            form.querySelector('.sp-div')?.remove();
+           let div = this.main.pbu.createElement('div',['position-absolute','sp-div']);
+                div.style.zIndex = '2001';
+                div.innerHTML = 
+                `
+                <ul class="list-group mt-2 item-selected" style="cursor: pointer;">
+                </ul>
+                `;
+        let selectedList = div.querySelector('ul.item-selected');
+        let li;
+        for(let i of items){
+            if(type=='post'){
+                let state = this.main.getHomeState(i.username,i.title,i.id,'s');
+               li = this.main.pbu.createElement('li',['list-group-item'],`${i.title} (${i.postType})`,[{n:'data-url',v:state.url}]);
+            }else{
+                li = this.main.pbu.createElement('li',['list-group-item'],`${i}`);
+            }
+        
+        selectedList.appendChild(li);
+        //
+        this.main.pbu.listen(li,'click',()=>{
+            if(type=='post'){
+                let url = li.getAttribute('data-url');
+            if(isView){
+                this.main.handleView(url,false);
+            }else{
+                input.value= this.main.config.HOSTNAME + url;
+            }
+            }else{
+                input.value = li.textContent;
+            }
+            
+          div.remove();
+        });
+      }
+      let rect = input.getBoundingClientRect();
+      div.style.left =  "0px";
+      if(type=='post' && isView){
+        div.style.top =  rect.bottom  + "px";
+      }
+     
+     form.appendChild(div);
+      //
+      this.main.pbu.listen(input,'blur',(e)=>{
+        if(e.rangeParent.parentElement.nodeName=='LI'){
+            return;
+        }
+        div?.remove();
+      });
+        }
+
+        
+}//func
 
 }//class

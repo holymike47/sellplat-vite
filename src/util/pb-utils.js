@@ -65,38 +65,41 @@ return document.createTextNode(text);
  * @param {string} href 
  * @param {string[]} clasz 
  * @param {boolean} isView
+ * @param {any|null} parent
  */
-createButton(title,href,clasz=[],isView){
+createButton(title,href,clasz=[],isView,parent=null){
   let div = this.createElement('div',['d-flex']);
   div.contentEditable = false;
   div.innerHTML = 
   `
   <a class="sp-cm ${this.showIf(!isView)}" style="cursor: pointer;"><i class="bi bi-three-dots-vertical"></i></a>
-  <a type="button" href="${href}" class="btn sp-button ${this.addClassIf(clasz.length>0,clasz)}">${title?title:'Title'}</a>
-  <a><i class="bi bi-link ${this.showIf(! this.main.utils.isNull(href))}"></i></a>
+  <a type="button" ${this.main.pbu.setAttributeIf(href,[{n:"href",v:href}])}  class="btn sp-button btn-primary ${this.addClassIf(clasz.length>0,clasz)}">${title?title:'Title'}</a>
   `;
-
   let button = div.querySelector('.sp-button');
+  let linkIcon = `<a class="link-icon"><i class="bi bi-link"></i></a>`;
   if(!isView){
+    if(href){
+     this.appendChild(div,linkIcon);
+    }
     //handle
   let cm = div.querySelector('.sp-cm');
-  let linkIcon = div.querySelector('.bi-link');
-  //
-
   this.listen(cm,'click',()=>{
-    let form = this.createElement('form',['search-post','position-relative']);
+    let form = this.createElement('form',['search-post', 'auto-complete','position-relative']);
     form.innerHTML = 
     `
-    <div class="sp-form-control">
-    <input type="text" value="${button.textContent}" class="form-control sp-validation-required sp-title my-2" placeholder="Title"/>
-    </div>
-    <div class="sp-form-control">
-    <input type="url" value="${button.href}" class="form-control sp-link" placeholder="Link"/>
-    </div>
+    ${this.main.pbu.createFormControl({serialize:true,placeholder:"Email",value:`${button.textContent}`,clasz:['sp-title','sp-validation-required']})}
+   ${this.main.pbu.createFormControl({serialize:true,type:"url",placeholder:"Link",value:`${button.href}`,clasz:['sp-link']})}
+    
     `
     let titleControl = form.querySelector('.sp-title');
     let linkControl = form.querySelector('.sp-link');
     let modal = this.main.utils.setModal('Link',form);
+    //search
+    if(parent){
+    this.main.pbu.listen(linkControl,'input',()=>{
+    parent.autoComplete(linkControl,false,'post');
+  });//
+    }
 
     this.listen(modal.confirm,'click',()=>{
       //validate title
@@ -105,26 +108,24 @@ createButton(title,href,clasz=[],isView){
       }
       button.textContent = titleControl.value;
       //############## link 
-      let href = linkControl.getAttribute('data-href');//set if validation passes
+      let href = linkControl.getAttribute('data-path');//set if validation passes
       if(href){
-          button.href = href;
-          this.show(linkIcon);
+        button.href = href;
+        this.appendChild(button.parentElement,linkIcon);;
       }else{
         //link removed
         button.removeAttribute('href');
-        this.hide(linkIcon);
+        button.parentElement.querySelector('a.link-icon')?.remove();
       }
       modal.dismiss.click();
     });
-    //search
-  this.main.pbu.listen(linkControl,'input',()=>{
-    this.main.utils.searchPosts(linkControl,false);
-  });//
   });//cm
   }
-  
-
   return (isView)?button:div;
+}//func
+
+getButtonElements(button,parent){
+
 }//func
 
 /**
@@ -163,11 +164,11 @@ for(let p of data.posts){
   tb.appendChild(tr);
   this.appendChild(tr,`<td><input type = "checkbox" class="sp-checkbox" data-pid="${p.id}"></td>`);
   //NOTE: Element [0] serves as the href title
-  this.appendChild(tr,`<td><a class="sp-link sp-route-link sp-detail" target="_blank" href= "${p.href}"> ${p.titles[0]}</a> </td>`);
+  this.appendChild(tr,`<td><a class="sp-route-link sp-detail" target="_blank" href= "${p.href}"> ${p.titles[0]}</a> </td>`);
   for(let i=1;i<l;i++){
     this.appendChild(tr,`<td>${p.titles[i]}</td>`);
   }
-  this.appendChild(tr,`<td><a class="sp-link sp-route-link sp-edit sp-admin-link"  href="${p.editHref}" ><i class="bi bi-pencil-square"></i>Edit</a></td>`);
+  this.appendChild(tr,`<td><a class="sp-route-link sp-admin"  href="${p.editHref}" ><i class="bi bi-pencil-square"></i>Edit</a></td>`);
   this.appendChild(tr,`<td><a data-pid="${p.id}" type="button" class="sp-delete btn-danger"  style="cursor: pointer;"><i class="bi bi-trash" style="color: #FF0000;"></i>Delete</a></td>`);
 }
 return section;
@@ -185,7 +186,7 @@ data.id = (data.id)?data.id:`id${this.main.utils.getRandomInt(100)}`;
 row.innerHTML =
  `
 <label for="${data.id}" class="sp-form-label ${this.addClassIf(isCheck,['form-check-label'],['form-label'])}  ${this.showIf(data.title)}">${data.title?data.title:''}</label>
-<input type="${data.type}" ${(isCheck &&(data.value==true || data.value=='true'))?'checked':''}  class="sp-form-control ${this.addClassIf(isCheck,['form-check-input'],['form-control'])} ${data.clasz?.join(' ')}"  id="${data.id}">
+<input type="${data.type}" ${(isCheck &&(data.value==true || data.value=='true'))?'checked':''}  class="sp-form-control sp-validation ${this.addClassIf(isCheck,['form-check-input'],['form-control'])} ${data.clasz?.join(' ')}"  id="${data.id}">
  `
 let input = row.querySelector('input');
 if(data.divClasz){
@@ -194,7 +195,6 @@ if(data.divClasz){
 
 if(data.value){
 input.setAttribute('value',data.value);
-//input.value = data.value;
 }
 
 if(data.name){
@@ -203,6 +203,12 @@ input.name = data.name;
 
 if(data.placeholder){
 input.placeholder = data.placeholder;
+}
+if(data.required){
+this.main.pbu.addClass(input,['sp-validation-required']);
+}
+if(data.withSubmit){
+  this.appendChild(row,'<button class="btn btn-primary w-100 my-2 sp-button" type="button">Submit</button>');
 }
 
 if(data.serialize){
@@ -230,10 +236,24 @@ row.innerHTML =
 </div>
  `;
 let select = row.querySelector('.sp-select');
+
+if(data.items){
 for(let i of data.items){
 let option = `<option ${(i==data.value)?'selected':''}>${i}</option>`;
 this.appendChild(select,option);
 }
+}else if(data.postItems){
+if(data.default){
+  this.appendChild(select,`<option value=null>${data.default}</option>`);
+}
+for(let i of data.postItems){
+let option = `<option value="${i.id}" ${(i.id==data.value)?'selected':''}>${i.title}</option>`;
+this.appendChild(select,option);
+}
+}
+
+
+
 if(data.clasz){
   this.addClass(select,data.clasz);
 }
@@ -251,6 +271,8 @@ return row;
  */
 //name used for id generation
 createCheckedInputElement(data){
+data.id = (data.id)?data.id:`id${this.main.utils.getRandomInt(100)}`;
+data.type = (data.type)?data.type:'radio';
 let row = this.createElement('div',['row','mb-3']);
 row.innerHTML = 
  `
@@ -260,18 +282,25 @@ row.innerHTML =
 </div>
 </div>
  `
+//note: all element have same name
+//concatenate name to id to enable lable click
 let itemsDiv = row.querySelector('.sp-items');
 for(let i of data.items){
 let item = 
 `
 <div class="form-check">
-<input type="${data.type}" ${data.value==i?'checked':''} class="form-check-input" name="${data.id}" type="radio" value="${i}" id="${data.id}-${i}">
-<label class="form-check-label" for="${data.id}-${i}">${i}</label>
+<input id="${i}-${data.id}" type="${data.type}" ${(i==data.value)?'checked':'notchecked'} class="form-check-input ${data.clasz?.join(' ')}"  name="${data.id}" value="${i}">
+<label for="${i}-${data.id}" class="form-check-label">${i}</label>
 </div>
 `;
 this.appendChild(itemsDiv,item);
 }//for
+
+if(data.serialize){
+  return row.outerHTML;
+}else{
 return row;
+}
 }//func
 
 createHr(){
@@ -473,7 +502,7 @@ return '';
  * this is a template helper methos
  * @param {boolean} condition - the condition to test
  * @param {any[]} attr - attributes to add if true
- * @param {any[]|undefined} elseAttr - attributes to add if false (*optional)
+ * @param {any[]|undefined|null} elseAttr - attributes to add if false (*optional)
  * @returns string
  */
 setAttributeIf(condition,attr,elseAttr){

@@ -1,5 +1,4 @@
 // @ts-check
-import { Dashboard } from "./dashboard";
 export class User{
 /**
  * 
@@ -9,99 +8,54 @@ export class User{
 constructor(main,state){
 this.main = main;
 this.state = state;
-this.isRoot = true;
 ///######
-this.title = "user";
 this.user$=null;
 this.users$=null;
 this.displayUsers = null;
 }//
 
-async process(){
-if(this.state.type=='list'){
-let r = await this.main.fu.fetch(this.state);
-if(r){
-this.users$ = r;
-await this.setDisplay();
-console.log('this.users$');
-console.log(this.users$);
-return this.getListTemplate();
-}
-
-}else{
-    //not list
-if(this.state.isAdmin && (this.state.type=='new' && this.state.id==-1)){
-this.user$ = this.getNewUser();
-//await this.setDisplay();//??
-return this.getFormTemplate();
-}else if(this.state.isAdmin && this.state.type=='edit'){
-let r = await this.main.fu.fetch(this.state);
-if(r){
-this.user$ = await this.main.fu.fetch();
-//await this.setDisplay();//??
-return this.getFormTemplate();
-}
-}//#edit
-}
-}//func
-
 async setDisplay(){
-if(!this.users$){
-
-}
+if(this.state.stateObject){
+if(this.state.type=='list'){
+this.users$ = this.state.stateObject.users;
 this.displayUsers = this.users$;
+}else{
+if(this.state.type=='new' && this.state.id==-1){
+this.user$ = this.getNewUser();
+}else if(this.state.type=='edit'){
+this.user$ = this.state.stateObject.user;
+}
+}
+}//
 }//func
 
-getListTemplate(){
+async getListTemplate(){
+await this.setDisplay();
 let $this = this;
 this.userComponent= this.main.pbu.createElement('main',['user-component']);
 this.userComponent.innerHTML =
 `
 <section>
 <header>
-   <a type="button" href="/app/${this.state.username}/user/page/new/-1" class="btn new-user sp-link sp-admin-link sp-route-link">Add User </a> 
+   <a type="button" href="/app/${this.state.username}/user/page/new/-1" class="btn btn-primary new-user sp-admin sp-route-link">Add User </a> 
    </header>
-   <section class="sp-table user-table"> <section>
+   <section class="sp-table user-list-table"> </section>
    
   </section>
 `;
-
+this.userListTableSection = this.userComponent.querySelector('.user-list-table'); 
 this.addUserButton = this.userComponent.querySelector('a.new-user');
 updateView();
 addEvents();
 return this.userComponent;
 function updateView(){
-let titles = ["First Name","Last Name","Email","Role"];
-let posts = [];
-for(let u of $this.displayUsers){
-let p = {
-id:u.id,
-href:`/${$this.state.username}/user/page/category/${u.name}/${u.id}`,
-titles:[u.firstName,u.lastName,u.email,u.topRole],
-editHref:`/app/${$this.state.username}/user/page/edit/${u.id}`,
-deleteHref:`/app/${$this.state.username}/user/page/delete/${u.id}`
-};
-posts.push(p);
-}//for
-let menuTable = $this.main.pbu.createTable({titles:titles,posts:posts});
-$this.main.pbu.appendChild($this.userComponent,menuTable);
+$this.setListTable();
 }//inner
 function addEvents(){
-    $this.main.pbu.listen($this.addUserButton,'click',(e)=>{
-        e.preventDefault();
-         let state = $this.main.getState(e,true);
-        $this.main.navigate(state);
-        // if($this.users$.length==$this.main.config.MAX_USERS){
-        //     $this.main.utils.notify($this.main.config.MAX_USERS_ERROR,1,'s');
-        //     return;
-        // }else{
-        //     let state = $this.main.getState(e,true);
-        //     $this.main.navigate(state);
-        // }
-    });
 }//inner
 }//func
-getFormTemplate(){
+async getFormTemplate(){
+await this.setDisplay();
 let $this = this;
 let u = this.user$;
 this.userComponent= this.main.pbu.createElement('main',['user-component']);
@@ -109,18 +63,16 @@ this.main.pbu.appendChild(this.userComponent,
 `
 <section">
 <form name="userForm" id="userForm">
-${this.main.pbu.createFormControl({id:"email",title:"E-mail",value:u.email})}
-${this.main.pbu.createFormControl({id:"firstName",title:"First Name",value:u.firstName})}
-${this.main.pbu.createFormControl({id:"middleName",title:"Middle Name",value:u.middleName})}
-${this.main.pbu.createFormControl({id:"lastName",title:"Last Name",value:u.lastName})}
-${this.main.pbu.createFormControl({id:"website",title:"Website",value:u.website})}
+${this.main.pbu.createFormControl({title:"E-mail",type:'email',value:u.email,clasz:['email','sp-validation-required'],serialize:true})}
+${this.main.pbu.createFormControl({title:"First Name",value:u.firstName,clasz:['first-name','sp-validation-required'],serialize:true})}
+${this.main.pbu.createFormControl({title:"Middle Name",value:u.middleName,clasz:['middle-name'],serialize:true})}
+${this.main.pbu.createFormControl({title:"Last Name",value:u.lastName,clasz:['last-name'],serialize:true})}
+${this.main.pbu.createFormControl({title:"Website",type:'url',value:u.website,clasz:['website'],serialize:true})}
 <section>
-${this.main.pbu.createFormControl({id:"password",type:'password',title:"Password",value:''})}
+${this.main.pbu.createFormControl({title:"Password",type:'password',value:'',clasz:['password',(this.state.type=='new')?'sp-validation-required':''],serialize:true})}
 </section>
-`,
-this.main.pbu.createSelectElement({id:"topRole",title:"Role",value:u.topRole,items:this.main.config.ROLES}),
-`
-<button type="button" id="saveUserButton"  class="btn float-start">Submit</button>
+${this.main.pbu.createSelectElement({title:"Role",value:u.topRole,clasz:['top-role'],items:this.main.config.ROLES,serialize:true})}
+<button type="button" id="saveUserButton"  class="btn btn-primary float-start">Submit</button>
 </form>
 </section>
 `
@@ -128,20 +80,25 @@ this.main.pbu.createSelectElement({id:"topRole",title:"Role",value:u.topRole,ite
 
 //get handles
 
-this.emailControl = this.userComponent.querySelector('#email');
-this.firstNameControl = this.userComponent.querySelector('#firstName');
-this.middleNameControl = this.userComponent.querySelector('#middleName');
-this.lastNameControl = this.userComponent.querySelector('#lastName');
-this.websiteControl = this.userComponent.querySelector('#website');
-this.passwordControl = this.userComponent.querySelector('#password');
-this.topRoleSelector=this.userComponent.querySelector('#topRole');//<select>
+this.emailControl = this.userComponent.querySelector('.email');
+this.firstNameControl = this.userComponent.querySelector('.first-name');
+this.middleNameControl = this.userComponent.querySelector('.middle-name');
+this.lastNameControl = this.userComponent.querySelector('.last-name');
+this.websiteControl = this.userComponent.querySelector('.website');
+this.passwordControl = this.userComponent.querySelector('.password');
+this.topRoleSelector=this.userComponent.querySelector('.top-role');//<select>
 this.saveUserButton=this.userComponent.querySelector('#saveUserButton');
 //
 updateView();
 addEvents();
 return this.userComponent;
 function updateView(){
-$this.passwordControl.placeholder = ($this.state.type=='new')?'Password':'Leave empty to use current password';
+if($this.state.type=='new'){
+$this.passwordControl.placeholder = 'Password';
+$this.main.pbu.addClass($this.passwordControl,['sp-validation-required']);
+}else{
+    $this.passwordControl.placeholder = 'Leave empty to use current password';
+}
 }//inner
 
 function addEvents(){
@@ -150,8 +107,24 @@ $this.saveUser();
 });
 }//inner
 }//func
+setListTable(){
+let titles = ["First Name","Last Name","Email","Role"];
+let posts = [];
+for(let u of this.displayUsers){
+let p = {
+id:u.id,
+href:`/${this.state.username}/user/page/category/${u.name}/${u.id}`,
+titles:[u.firstName,u.lastName,u.email,u.topRole],
+editHref:`/app/${this.state.username}/user/page/edit/${u.id}`,
+deleteHref:`/app/${this.state.username}/user/page/delete/${u.id}`
+};
+posts.push(p);
+}//for
+let menuTable = this.main.pbu.createTable({titles:titles,posts:posts});
+this.main.pbu.replace(this.userListTableSection,menuTable);
+}//func
 async saveUser(){
-if(!this.main.vu.required(this.emailControl,this.firstNameControl)){
+if(!this.main.vu.validate(this.userComponent.querySelectorAll('input.sp-validation'))){
 return;
 }
 let user={
@@ -162,11 +135,9 @@ middleName:this.middleNameControl.value,
 lastName:this.lastNameControl.value,
 website:this.websiteControl.value,
 topRole:this.topRoleSelector.value,
-password:this.passwordControl.value,
-username:this.main.cache.tenant.username,
-tenantId:this.main.cache.tenant.tenantId,
-tenantUuid:this.main.cache.tenant.tenantUuid,
+password:this.passwordControl.value
 }
+this.main.utils.sign(user);
 console.log("user");
 console.log(user);
 // if(!this.validate(user)){
@@ -177,7 +148,7 @@ state.body = JSON.stringify(user);
 let r = await this.main.fu.fetch(state);
 if(r>0){
 this.state = this.main.replaceState(this.user$,this.state,r);
-this.main.utils.notify("Saved",0,'s');
+this.main.utils.notify("Saved",0,'d');
 }
 }//func
 
@@ -218,7 +189,7 @@ getNewUser(){
         lastName:"",
         dob:"",
         website:"",
-        topRole:"",
+        topRole:"AUTHOR",
         password:"",
         username:"",
         tenantId:"",
@@ -237,7 +208,7 @@ getItems(){
  * @param {any} items 
  */
 async setItems(items){
-this.users$ = items;
+this.state.stateObject.users = items;
 await this.setDisplay();
 }
 }//class

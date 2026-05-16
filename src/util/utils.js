@@ -16,37 +16,75 @@ this.pbu = new PbUtils(null);
 /**
  * 
  * @param {any} item 
+ * @param {any} state
  */
-sign(item){
-console.log("main in sign");
-console.log(this.main);
-item.username= this.main.cache.tenant.username;
-item.tenantId=this.main.cache.tenant.tenantId;
-item.tenantUuid=this.main.cache.tenant.tenantUuid;
+sign(item,state){
+let user = this.getCache('user');
+item.username= user.username;
+item.tenantId=user.tenantId;
+item.tenantUuid=user.tenantUuid;
+if(state?.type=='new' && state?.component=='post'){
+    item.authorId = user.id;
+}
 }
 getUUID(){
 return crypto.randomUUID();
-// const components = [];
+//const components = [];
     
-//     // User agent
-//     components.push(navigator.userAgent);
+    // User agent
+    //components.push(navigator.userAgent);
     
-//     // Screen resolution
-//     components.push(`${screen.width}x${screen.height}`);
+    // Screen resolution
+    //components.push(`${screen.width}x${screen.height}`);
     
-//     // Timezone
-//     components.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    // Timezone
+    //components.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
     
-//     // Language
-//     components.push(navigator.language);
+    // Language
+    //components.push(navigator.language);
     
-//     // Canvas fingerprinting
-//     components.push(await getCanvasFingerprint());
+    // Canvas fingerprinting
+    //components.push(await getCanvasFingerprint());
     
-//     // WebGL fingerprint
-//     components.push(await getWebGLFingerprint());
+    // WebGL fingerprint
+    //components.push(await getWebGLFingerprint());
     
-//     return CryptoJS.SHA256(components.join('|')).toString();
+    //return CryptoJS.SHA256(components.join('|')).toString();
+}//
+
+/**
+ * 
+ * @param {string} name 
+ * @param {any} value 
+ */
+async setCache(name,value){
+    //maybe encrypt
+localStorage.setItem(name,JSON.stringify(value));
+}//func
+
+/**
+ * 
+ * @param {string} name 
+ * @returns 
+ */
+getCache(name){
+    return JSON.parse(localStorage.getItem(name));
+}//
+
+/**
+ * save or return subscription cookie
+ * @param {boolean} save - if true, save cookie, else check existence
+ * @param {string} username
+ */
+genCookie(save,username){
+if(save){
+document.cookie = `${username}_subscribed=true; max-age=` + (365 * 24 * 60 * 60) + "; path=/";
+}else{
+    let subscribed = document.cookie.split('; ').find(row => row.startsWith(`${username}_subscribed`));
+    console.log('subscribed');
+    console.log(subscribed);
+    return subscribed == `${username}_subscribed=true`;
+}
 }//
 
 /**
@@ -81,73 +119,6 @@ isNull(value){
         return false;
     }
 }
-
-/**
- * 
- * @param {HTMLInputElement} input 
- * @param {boolean} isView 
- */
-async searchPosts(input,isView){
-let $this = this;
-let form = input.closest('form.search-post');
-let searchTerm = input.value;
-if(!searchTerm){
-let div = form.querySelector('.sp-div');
-div?.remove();
-}
-searchTerm = searchTerm.trim().toLowerCase();
-if(searchTerm.length<2){
-return;
-}
-await this.main.setPosts();
-//let regex = new RegExp(`${searchTerm}`, "i");
-   let displayPosts = $this.main.posts$.filter(p=>p.title.toLowerCase().includes(searchTerm));
-    //let displayPosts = this.main.posts$.filter(p=>regex.test(p.title));
-        if(displayPosts && displayPosts.length>0){
-            form.querySelector('.sp-div')?.remove();
-            /**@type {HTMLElement}*/ let div = $this.main.pbu.createElement('div',['position-absolute','sp-div']);
-                div.style.zIndex = '2001';
-                div.innerHTML = 
-                `
-                <ul class="list-group mt-2 post-selected" style="cursor: pointer;">
-                </ul>
-                `;
-        let postSelectedList = div.querySelector('ul.post-selected');
-        for(let p of displayPosts){
-          //getHomeState(username,title,id=0,archiveType='s')
-        let state = $this.main.getHomeState(p.username,p.title,p.id,'s');
-        let li = $this.main.pbu.createElement('li',['list-group-item'],`${p.title} (${p.postType})`,[{n:'data-url',v:state.url}]);
-        postSelectedList.appendChild(li);
-        //
-        $this.main.pbu.listen(li,'click',()=>{
-            let url = li.getAttribute('data-url');
-            if(isView){
-                $this.main.handleView(url,false);
-            }else{
-                input.value= $this.main.config.HOSTNAME + url;
-            }
-          div.remove();
-        });
-      }
-      let rect = input.getBoundingClientRect();
-      div.style.left =  "0px";
-      //div.style.left = rect.left + "px";
-      if(isView){
-        div.style.top =  rect.bottom  + "px";
-      }
-     
-     form.appendChild(div);
-      //
-      $this.main.pbu.listen(input,'blur',(e)=>{
-        if(e.rangeParent.parentElement.nodeName=='LI'){
-            return;
-        }
-        div?.remove();
-      });
-        }
-
-        
-}//func
 
 /**
  * 
@@ -195,6 +166,10 @@ notify(message,level,type='s',customMessageDiv=null){
 //validationMessage
 //statusMessage
 let notificationMessageDiv;
+if(customMessageDiv){
+    notificationMessageDiv = customMessageDiv;
+}
+else{
 switch(type){
 case 'm':
     notificationMessageDiv = document.querySelector('#mainNotification');
@@ -205,9 +180,16 @@ case 'd':
 case 's':
     notificationMessageDiv = document.querySelector('#statusMessage');
     break;
+// case 'c':
+// notificationMessageDiv = customMessageDiv;
+// break;
 default :
     notificationMessageDiv = document.querySelector('#mainNotification');
 }
+}
+
+
+
 
 //this.pbu.toggleClass(notificationMessageDiv,'text-success');
 
@@ -243,21 +225,54 @@ notificationMessageDiv.innerHTML = `
 
 }//;//?
 
+/**
+ * 
+ * @param {boolean} serialize 
+ */
+getModalTemplate(serialize=false){
+let div = this.main.pbu.createElement('div',['prompt-modal']);
+div.innerHTML = 
+`
+<button id="promptModalTrigger" data-bs-toggle="modal" data-bs-target="#promptModal"></button>
+<div class="modal fade" id="promptModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <p class="modal-notice"></p>
+        <div class="modal-body">
 
+        </div>
+        <div class="modal-footer">
+          <span id="modalButton"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+return serialize?div.outerHTML:div;
+}
 /**
  * 
  * @param {string} title 
  * @param {string|HTMLElement} body 
+ * @param {boolean} isView
  * @returns 
  */
-setModal(title,body){
+setModal(title,body,isView=false){
+let promptModalSection = document.querySelector('section#promptModalSection');
+this.main.pbu.replace(promptModalSection,this.main.utils.getModalTemplate());
 let promptModalTrigger = this.pbu.query('#promptModalTrigger');//<button>
 //let promptModal = this.pbu.query('#promptModal');
 let modalTitle = this.pbu.query('#promptModal .modal-title');//<h5>
+let modalNotice = this.pbu.query('#promptModal .modal-notice');//<p> 
 let modalBody = this.pbu.query('#promptModal .modal-body');//<div>
 let modalDismiss = this.pbu.query('#promptModal .btn-close');
 
 modalTitle.textContent = title;
+modalBody.innerHTML = modalNotice.innerHTML = ''
 if(body){
 if(body=='blanc'){
     modalBody.innerHTML = '';
@@ -274,12 +289,18 @@ modalBody.appendChild(actionDiv);
 let cancelButton = this.pbu.createElement('button',['btn','btn-primary','float-start'],'Cancel');
 let confirmButton = this.pbu.createElement('button',['btn','btn-primary','float-end'],'OK');
 this.pbu.appendChild(actionDiv,cancelButton,confirmButton);
-
+//events
+this.pbu.listen(modalDismiss,'click',()=>{;
+promptModalSection.innerHTML = '';
+});
+//
 this.pbu.listen(cancelButton,'click',()=>{
 modalDismiss.click();
 });
 let modal = {
+init:()=>{modalNotice.innerHTML = ''},
 title:modalTitle,
+notice:modalNotice,
 body:modalBody?modalBody:null,
 input:input,
 confirm:confirmButton,
@@ -343,18 +364,35 @@ array.splice(i, 1);
 /**
  * 
  * @param {string} title 
- * @param {any[]} array 
+ * @param {any[]} item 
  * @returns
  */
-getItemIdFromTitle(title,array){
-/**@type {any|null}*/let id;
-for(let arr of array){
-    if(arr.title.toLowerCase()==title.toLowerCase()){
-        id = arr.id;
+getItemIdFromTitle(title,item){
+/**@type {any|null}*/let id = null;
+for(let i of item){
+    if(i.title.toLowerCase()==title.toLowerCase()){
+        id = i.id;
         break;
     }
 }//for
 return id;
+}//func
+
+/**
+ * 
+ * @param {string|number} id
+ * @param {any[]} item 
+ * @returns
+ */
+getItemTitleFromId(id,item){
+/**@type {any|null}*/let title = null;
+for(let i of item){
+    if(i.id==id){
+        title = i.title;
+        break;
+    }
+}//for
+return title;
 }//func
 /**
  * 
@@ -364,6 +402,5 @@ return id;
 pop(element,array){
 this.deleteItem(element,array)
 }//func
-
 
 }//class

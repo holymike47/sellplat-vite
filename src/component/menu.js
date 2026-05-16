@@ -14,7 +14,7 @@ this.title = 'menu';
 //
 this.maxId = 0;
 //
-this.menuBuildData$ = null;
+//this.menuBuildData$ = null;
 this.selectedMenu = null;//temporary hold
 //
 this.menu$ = null;
@@ -23,14 +23,22 @@ this.menus$ = null;
 /**@type {any}*/this.displayMenus = null;
 }//
 async setDisplay(){
-if(!this.menus$){
-
-
-}
+if(this.state.stateObject){
+if(this.state.type=='list'){
+this.menus$ = this.state.stateObject.menus;
 this.displayMenus = this.menus$;
+}else{
+if(this.state.type=='new' && this.state.id==-1){
+this.menu$ = this.getNewMenu();
+}else if(this.state.type=='edit'){
+this.menu$ = this.state.stateObject.menu;
+}
+}
+}//
 }//func
 
-getListTemplate(){
+async getListTemplate(){
+await this.setDisplay();
 let $this = this;
     //get handles
 this.menuComponent= this.main.pbu.createElement('main',['menu-component']);
@@ -38,48 +46,52 @@ this.menuComponent.innerHTML =
 `
 <section>
 <header>
-    <a type="button" href="/app/${this.state.username}/menu/page/new/-1" class="btn new-menu sp-link sp-admin-link sp-route-link">Add Menu </a> 
+    <a type="button" href="/app/${this.state.username}/menu/page/new/-1" class="btn btn-primary new-menu sp-admin sp-route-link">Add Menu </a> 
 </header>
 
-<section class="sp-table menu-table">
-<section>
+<section class="sp-table menu-list-table">
+</section>
 
 </section>
 `;
 //handle
 this.menuTable = this.menuComponent.querySelector('.menu-table');
+this.menuListTableSection = this.menuComponent.querySelector('.menu-list-table'); 
 updateView();
 addEvents();
 return this.menuComponent;
 function updateView(){
-let titles = ["Title","Description"];
-let posts = [];
-for(let m of $this.displayMenus){
-let p = {
-id:m.id,
-href:`/app/${$this.state.username}/menu/page/edit/${m.id}`,
-titles:[m.title,m.description],
-editHref:`/app/${$this.state.username}/menu/page/edit/${m.id}`,
-deleteHref:`/app/${$this.state.username}/menu/page/delete/${m.id}`,
-};
-posts.push(p);
-}//for
-let menuTable = $this.main.pbu.createTable({titles:titles,posts:posts});
-$this.main.pbu.appendChild($this.menuComponent,menuTable);
+$this.setListTable();
 }//inner
 function addEvents(){
 
 }//inner
 }//func
-
-getFormTemplate(){
+setListTable(){
+let titles = ["Title","Description"];
+let posts = [];
+for(let m of this.displayMenus){
+let p = {
+id:m.id,
+href:`/app/${this.state.username}/menu/page/edit/${m.id}`,
+titles:[m.title,m.description],
+editHref:`/app/${this.state.username}/menu/page/edit/${m.id}`,
+deleteHref:`/app/${this.state.username}/menu/page/delete/${m.id}`,
+};
+posts.push(p);
+}//for
+let menuTable = this.main.pbu.createTable({titles:titles,posts:posts});
+this.main.pbu.replace(this.menuListTableSection,menuTable);
+}//func
+async getFormTemplate(){
+await this.setDisplay();
 let $this = this;
 this.menuComponent= this.main.pbu.createElement('main',['menu-component']);
 this.main.pbu.appendChild(this.menuComponent,
-this.main.pbu.createFormControl({id:'title',title:"Title",value:this.menu$.title}),
-this.main.pbu.createFormControl({id:'description',title:"Description",value:this.menu$.description}),
 `
 <div class="container">
+${this.main.pbu.createFormControl({title:"Title",value:this.menu$.title,clasz:['title'],required:true,serialize:true})}
+${this.main.pbu.createFormControl({title:"Description",value:this.menu$.description,clasz:['description'],serialize:true})}
  <!--##########-->
 <div class="row">
     <div id = "editSection" class="col-12">
@@ -123,9 +135,8 @@ this.main.pbu.createFormControl({id:'description',title:"Description",value:this
 `
 );
 //edit section
-this.menuTitle = this.menuComponent.querySelector('input#title');
-this.menuDescription = this.menuComponent.querySelector('input#description');
-//this.menuRow = this.menuComponent.querySelector('.menu-row');
+this.menuTitleControl = this.menuComponent.querySelector('input.title');
+this.menuDescriptionControl = this.menuComponent.querySelector('input.description');
 this.menuPostTypeSelector = this.menuComponent.querySelector('.menu-post-type');
 this.menuSearchControl = this.menuComponent.querySelector('.menu-search');
 this.menuCustomLinkControl = this.menuComponent.querySelector('.menu-custom-link');
@@ -183,7 +194,6 @@ function addEvents(){
     }
   });
   
-
   //search
   $this.main.pbu.listen($this.menuSearchControl,'input',()=>{
     $this.menuSelectedList.innerHTML = '';
@@ -195,12 +205,12 @@ function addEvents(){
     switch(postType){
       case 'page':
       case 'post':
-        items = $this.menuBuildData$.posts.filter(p=>p.postType==postType);
+        items = $this.state.stateObject.posts.filter(p=>p.postType==postType);
         break;
       case 'post category':
-        items = $this.menuBuildData$.categories.filter(c=>c.postType=='post');
+        items = $this.state.stateObject.categories.filter(c=>c.postType=='post');
       case 'product category':
-        items = $this.menuBuildData$.categories.filter(c=>c.postType=='product');
+        items = $this.state.stateObject.categories.filter(c=>c.postType=='product');
         break;
     }
     
@@ -220,7 +230,6 @@ function addEvents(){
                             postId:i.id,
                             title:i.title,
                             slug:i.slug,
-                            username : '',
                             postType:postType,
                             parentId:0,
                             children:[]
@@ -410,10 +419,10 @@ return row;
 }//func
 
 async saveMenu(){
-let title = this.menuTitle.value;
-if(!this.main.vu.validate(this.menuTitle)){
+if(!this.main.vu.validate(this.menuTitleControl,this.menuDescriptionControl)){
 return;
 }
+let title = this.menuTitleControl.value;
   let displayMenu = [];
   //let selectedMenuLi = this.displaySection.querySelectorAll('li[data-selected-menu]')||[];
   let selectedMenuLi = this.displaySection.querySelectorAll(':scope > li')||[];
@@ -436,12 +445,10 @@ let menu = {
 id: this.state.id,
 title:title,
 slug:title.toLowerCase(),
-description:this.menuDescription.value,
+description:this.menuDescriptionControl.value,
 menuItems:JSON.stringify(displayMenu),
-username:this.main.cache.tenant.username,
-tenantId:this.main.cache.tenant.tenantId,
-tenantUuid:this.main.cache.tenant.tenantUuid,
 };
+this.main.utils.sign(menu);
 // if(!this.validate(menu)){
 // return;
 // }
@@ -512,7 +519,7 @@ getItems(){
  * @param {any} items 
  */
 async setItems(items){
-this.menus$ = items;
+this.state.stateObject.menus = items;
 await this.setDisplay();
 }
 }//class
