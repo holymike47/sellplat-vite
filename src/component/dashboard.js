@@ -15,12 +15,12 @@ constructor(main, state){
 this.main = main;
 this.state = state;
 this.adminUser = this.main.utils.getCache('user');
-this.isTenant = this.adminUser.topRole == 'ADMIN';
+this.option = this.main.utils.getCache('option');
+this.isTenant = this.adminUser?.topRole == 'ADMIN';
 ///
 this.child = null;
 this.idsToDelete = [];
 
-this.title = "Dashboard";
 document.title = "Dashboard";
 
 this.getTemplate();
@@ -88,14 +88,7 @@ this.dashboardComponent.innerHTML =
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h3>Dashboard<span class="m-x sp-component-title"></span></h3>
       </div>
-      <section class="position-relative my-2">
-      <section class="position-absolute z-10" style="left: 30vw;top: -40px;">
-      <div class="d-flex align-items-center justify-content-center">
-      <div id="dashboardNotification" class="notification"></div>
-      </div>
-      </section>
-      </section>
-      
+
       <div id="dashboardReplace">
   
       </div>
@@ -106,8 +99,7 @@ this.dashboardComponent.innerHTML =
 </div>
 
 <section id="promptModalSection"></section>
-
-      </main>
+</main>
 `;
 this.replace = this.main.pbu.query('#replace');
 this.main.pbu.replace(this.replace,this.dashboardComponent);
@@ -221,7 +213,7 @@ if(this.idsToDelete.includes(id)){
 }
 }else{
     //not checked
-this.main.utils.deleteItem(id,this.idsToDelete);
+this.main.utils.pop(id,this.idsToDelete);
 }
 //
 if(this.idsToDelete.length>0){
@@ -229,7 +221,6 @@ this.main.pbu.show(this.massDeleteButton);
 }else{
 this.main.pbu.hide(this.massDeleteButton);
 }
-console.log(this.idsToDelete);
 });
 }//for
 //
@@ -268,12 +259,12 @@ this.child.parent = this;
 
 async process(state){
 state.stateObject = state.stateObject || await this.main.fu.fetch(state);
-console.log("stateObject");
-console.log(state.stateObject);
+this.main.log(state.stateObject,0,`${this.state.component}.process(): stateObject`);
   switch(state.component){
     case 'option':
-      this.option = this.option || new Option(this.main,state);
-      this.setChild(this.option,state);
+      //avoid conflict with class member
+      let option = new Option(this.main,state);
+      this.setChild(option,state);
       break;
 /// ########## MENU ##############
     case 'menu':
@@ -282,8 +273,8 @@ console.log(state.stateObject);
     break;
     case 'user':
 /// ########## USER ##############
-this.user = this.user || new User(this.main,state);
-this.setChild(this.user,state);
+  this.user = this.user || new User(this.main,state);
+  this.setChild(this.user,state);
   break;
  /// ########## CATEGORY ##############
     case 'category':
@@ -292,7 +283,7 @@ this.setChild(this.user,state);
       break;
      /// ########## POST ##############
     case 'post':
-  this.post= this.post || new Post(this.main,state);
+    this.post= this.post || new Post(this.main,state);
     this.setChild(this.post,state);
     break;
   }//switch
@@ -322,7 +313,7 @@ if(this.idsToDelete.includes(id)){
 }
 }else{
     //not checked
-this.main.utils.deleteItem(id,this.idsToDelete);
+this.main.utils.pop(id,this.idsToDelete);
 }
 //
 if(this.idsToDelete.length>0){
@@ -330,7 +321,6 @@ this.main.pbu.show(this.massDeleteButton);
 }else{
 this.main.pbu.hide(this.massDeleteButton);
 }
-console.log(this.idsToDelete);
 }//
 
 /**
@@ -360,12 +350,8 @@ updatedItems.push(i);
 this.child.setItems(updatedItems);
 this.idsToDelete = [];
 this.child.setListTable();
-this.main.utils.notify("Deleted",0,'s');
+this.main.utils.notify("Deleted",0,'d');
 this.main.mh.deleteFromServer({items:deletedItems,component:this.child.title});
-//let template = await this.child.getListTemplate();
-//maybe unsubscribe here
-//this.mount(template);
-
 }
 modal.dismiss.click();
 });

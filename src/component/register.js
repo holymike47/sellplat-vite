@@ -8,7 +8,6 @@ export class Register{
 constructor(main,state){
 this.main = main;
 this.state = state;
-this.title = "register";
 this.getTemplate();
 }//
 
@@ -24,8 +23,7 @@ this.registerComponent.innerHTML =
     ${this.main.pbu.createFormControl({serialize:true,title:"First Name",clasz:['first-name','sp-validation-required']})}
     ${this.main.pbu.createFormControl({serialize:true,title:"Last Name",clasz:['last-name','sp-validation-required']})}
      ${this.main.pbu.createFormControl({serialize:true,title:"Email",type:'email',clasz:['email','sp-validation-required']})}
-    ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',clasz:['password','sp-validation-required']})}
-    <button class="btn btn-primary w-100 my-2 sp-button" type="button">Submit</button>
+    ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',withSubmit:true,clasz:['password','sp-validation-required']})}
     <p class="text-center small"><a href="/app/login">Already have an account? Log in</a></p>
    </section>
   </form>
@@ -87,7 +85,7 @@ state.link = this.main.fu.getApi(undefined,false,'register');
 state.body = JSON.stringify(tenant);
 let r = await this.main.fu.fetch(state);
 if(r){
-console.log(r);
+this.main.log(r,0,'Register.register(): Registeration success - tenant info');
 this.main.utils.setCache('user',r.user);
 this.main.utils.setCache('option',r.option);
 let username = r.user.username;

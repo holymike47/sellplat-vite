@@ -8,8 +8,6 @@ export class PbUtils{
  */
 constructor(main){
   this.main = main;
-  this.isRoot = false;
-  this.err = 'Not Found';
 }
 /**
  * 
@@ -97,7 +95,10 @@ createButton(title,href,clasz=[],isView,parent=null){
     //search
     if(parent){
     this.main.pbu.listen(linkControl,'input',()=>{
-    parent.autoComplete(linkControl,false,'post');
+    if(!this.main.vu.sanitize([linkControl])){return;}
+    let regex = new RegExp(`${linkControl.value}`, "i");
+    let posts = parent.posts$.filter(p=>regex.test(p.title));
+    this.main.autoComplete(linkControl,false,posts,'post');
   });//
     }
 
@@ -122,10 +123,6 @@ createButton(title,href,clasz=[],isView,parent=null){
   });//cm
   }
   return (isView)?button:div;
-}//func
-
-getButtonElements(button,parent){
-
 }//func
 
 /**
@@ -343,16 +340,6 @@ parent.prepend(el);
 
 /**
  * 
- * @param {HTMLElement} parent 
- * @param  {...HTMLElement} els 
- */
-appendChild2(parent,...els){
-for(let el of els){
-parent.appendChild(el);
-}
-}//
-/**
- * 
  * @param {HTMLElement} el 
  * @param {string} eventType 
  * @param {Function} func 
@@ -400,16 +387,7 @@ if(attr=='null'){
 }
 return attr;
 }//func
-/**
- * 
- * @param {HTMLElement} el 
- * @param  {...string[]} attrs 
- */
-// setAttributes(el, ...attrs){
-// 	for(let attr of attrs){
-// el.setAttribute(attr[0],attr[1]);
-// 	}
-// }
+
 /**
  * 
  * @param {HTMLElement} el 
@@ -525,7 +503,7 @@ return r;
 }
 
 /**
- * 
+ * for display only
  * @param {HTMLElement} el 
  */
 toggle(el){
@@ -548,17 +526,6 @@ el.classList.add(clasz);
 }
 }//
 
-/**
- * 
- * @param {string} element
- * @param {string[]} array 
- */
-pop(element,array){
-let i = array.indexOf(element);
-if(i >-1){
-array.splice(i, 1);
-}
-}//func
 /**
  * 
  * @param {HTMLElement} parent 
@@ -589,28 +556,6 @@ this.replace(replace,component);
  */
 outerHTML(el){
 return el.outerHTML;
-}//func
-
-/**
- * 
- * @param {HTMLElement} section - where to append
- * @returns 
- */
-getLoginForm(){
-let loginForm = this.createElement('form',['login-form']);
-let controls = `
-      <div class="form-floating">
-        <input id="email" name="Email" type="email" class="form-control sp-form-control sp-validation-required sp-email">
-        <label for="email">Email address</label>
-      </div>
-
-      <div class="form-floating">
-        <input type="password" name="password" class="form-control sp-form-control sp-validation-required sp-password" id="password">
-        <label for="password">Password</label>
-      </div>
-`;
-loginForm.innerHTML = controls;
-return loginForm;
 }//func
 
 }//class

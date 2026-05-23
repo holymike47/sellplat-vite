@@ -10,7 +10,6 @@ export class Menu{
 constructor(main,state){
 this.main = main;
 this.state = state;
-this.title = 'menu';
 //
 this.maxId = 0;
 //
@@ -156,12 +155,9 @@ addEvents();
 return this.menuComponent;
 function updateView(){
 if($this.menu$.menuItems){
-   console.log($this.menu$.menuItems);
 let menuItems = JSON.parse($this.menu$.menuItems) || [];//string array
 let maxIds = menuItems.map(mi=>mi.menuId);
 $this.maxId =  Math.max(...maxIds);
-  console.log("Updateview(): selectedMenus");
-  console.log(menuItems);
   for(let m of menuItems){
     let li = addMenus(m);
     $this.displaySection.appendChild(li);
@@ -234,8 +230,7 @@ function addEvents(){
                             parentId:0,
                             children:[]
                             };
-console.log($this.selectedMenu);
-
+$this.main.log($this.selectedMenu,0,'Menu.getFormTemplate.addEvents(): selectedMenu');
           $this.menuSearchControl.value= $this.selectedMenu.title;
           $this.menuSelectedList.innerHTML = '';
           $this.main.pbu.hide($this.menuSelectedList);
@@ -448,54 +443,15 @@ slug:title.toLowerCase(),
 description:this.menuDescriptionControl.value,
 menuItems:JSON.stringify(displayMenu),
 };
-this.main.utils.sign(menu);
-// if(!this.validate(menu)){
-// return;
-// }
-console.log(menu);
-let state = this.state;
-state.handler = 'save';
+this.main.log(menu,0,'Menu.saveMenu(): Before submit');
+let state = this.main.utils.clone(this.state);
 state.body = JSON.stringify(menu);
 let r = await this.main.fu.fetch(state);
 if(r>0){
 this.state = this.main.replaceState(this.menu$,this.state,r);
-this.main.utils.notify('Saved',0,'s');
+this.main.utils.notify('Saved',0,'m');
 }
 }//func
-
-/**
- * 
- * @param {any} menu 
- * @returns 
- */
-validate(menu){
-let valid = true;
- if(this.state.id==-1){
-  //firstly check if user has any menu
-  if(this.menus$){
-    for (let m of this.menus$) {
-					if (m.title.toLowerCase()==menu.title.toLowerCase()) {
-                        valid = false;
-						// user exists
-						this.main.utils.notify("Title already used",1,'d');
-						break;
-					}
-				}
-  }
-        
-    }else{
-      if(this.menus$){
-        let otherUsersEmail = this.menus$.filter(m => m.id!=menu.id).map(m => m.title);
-				if (otherUsersEmail.includes(menu.title)) {
-                    valid = false;
-					// cant use an email of an existing user
-					this.main.utils.notify("Title already used",1,'d');
-				}
-      }
-        
-    }
-return valid;
-}//
 
 //######
 getNewMenu(){

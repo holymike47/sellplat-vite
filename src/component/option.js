@@ -1,5 +1,4 @@
 // @ts-check
-import { MediaHandler } from "./media-handler";
 export class Option{
 /**
  * 
@@ -10,7 +9,6 @@ constructor(main,state){
 this.main = main;
 this.state = state;
 this.state.component = 'option';//important, could be setting
-this.title = "option";
 /**@type {any}*/this.option$={};
 }//
 
@@ -84,6 +82,7 @@ if(! this.main.vu.validate(this.optionSection.querySelectorAll('input.sp-form-co
 }
 let logoImageId = await this.main.mh.uploadToServer(this.logoImageDiv.querySelector('div.image-template'));
 let iconImageId = await this.main.mh.uploadToServer(this.iconImageTemplate.div);
+//don't touch these first properties
 let option = {
 id:this.option$.id,
 siteName:this.siteNameControl.value,
@@ -93,17 +92,15 @@ activeTheme:this.optionSection.querySelector('input.active-theme:checked').value
 logoUrl:logoImageId,
 iconUrl:iconImageId,
 };
-this.main.utils.sign(option);
-console.log('before submit');
-console.log(option);
+this.main.log(option,0,'Option.saveOption(): Before submit');
 let state = this.state;
 state.body = JSON.stringify(option);
 let r = await this.main.fu.fetch(state);
 if(r && r==this.option$.id){
-this.option$ = option;
-this.main.utils.setCache('option',this.option$);
+this.option$ = this.parent.option =  option;
+//this.main.utils.setCache('option',this.option$);
 this.main.setTheme(this.option$);
-this.main.utils.notify("Saved",0,'s');
+this.main.utils.notify("Saved",0,'m');
 this.main.mh.deleteFromServer(null);
 }
 }//

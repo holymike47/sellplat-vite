@@ -384,29 +384,6 @@ reader.readAsDataURL(file);
  * 
  * @param {any} imageTemplate 
  */
-async uploadToFolder(imageTemplate){
-try{
-let image = imageTemplate.querySelector('.main-image');
-let input = imageTemplate.querySelector('.sp-input');
-let imageId;
-if(!image.src){
-imageId = '';
-}else if(image.src.includes("/images")){
-imageId = image.src.substring(image.src.indexOf('/images'));
-}else if(image.src.startsWith('data:image')){
-
-}
-return imageId;
-}catch(error){
-this.main.utils.notify("Error uploading image",2,'d');
-throw new Error();
-}
-}//func
-
-/**
- * 
- * @param {any} imageTemplate 
- */
 async uploadToServer(imageTemplate){
 try{
 let image = imageTemplate.querySelector('.main-image');
@@ -424,7 +401,7 @@ let data = {
 };
 state.body = JSON.stringify(data);
 let r = await this.main.fu.fetch(state);
-console.log(r);
+this.main.log(r,0,`MediaHandler.uploadToServer(): cloudflare upload link`);
 if(r){
 //now we have the link, upload
 let file = input.files[0];
@@ -446,8 +423,8 @@ if(r){
 }
 return imageId;
 }catch(error){
-this.main.utils.notify("Error uploading image",2,'m');
-throw new Error();
+this.main.utils.notify("Error uploading image",2,'d');
+this.main.log(error,0,'MediaHandler.uploadToServert(): fetch error');
 }finally{
 let oldImageId = imageTemplate.querySelector('.main-image').getAttribute('oldImageId');
 if(oldImageId?.includes('imagedelivery')){
@@ -488,8 +465,7 @@ imageIds = [...data.imageIds];
 }
 
 if(imageIds.length>0){
-console.log('imageids');
-console.log(imageIds);
+this.main.log(imageIds,0,`MediaHandler.deleteFromServer(): imageids`);
 state.link = this.main.fu.getApi(state.username,true,'token');
 let input = {
 "type":"cloudflare",
@@ -498,11 +474,7 @@ let input = {
 };
 state.body = JSON.stringify(input);
 this.main.fu.fetch(state).then(r=>{
-if(import.meta.env.MODE=='development'){
-console.log("image deleted");
-console.log(r);
-}
-    
+this.main.log(r,0,`MediaHandler.deleteFromServer(): image deleted?`);
 });
 }
 }//func

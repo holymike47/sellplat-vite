@@ -6,9 +6,7 @@ export class FetchUtils{
  */
 constructor(main){
     this.main = main;
-    this.errorMessage = 'Error';
-    this.spSid = '';
-    this.spStp = '';
+    this.errorMessage = 'An unexpected error occurred';
 }
 
 
@@ -18,13 +16,7 @@ constructor(main){
  * @returns 
  */
 async fetch(state){
-    //fix later
-if(state.notice){
-    //cant be cloned
-    this.notice = state.notice;
-}
 state = this.main.utils.clone(state);
-state.notice = this.notice;
 if(!state.method){
 state.method = (state.body)?'POST' :'GET';
 }
@@ -48,13 +40,9 @@ let response;
 let responseJson;
 try{
 response = await window.fetch(request);
-console.log("response headers");
-console.log(response.headers);
 responseJson = await response.json();
 }catch(error){
-if(import.meta.env.MODE=='development'){
-console.error(error);
-}
+this.main.log(error,0,'FetchUtils.fetch(): fetch error');
 this.main.utils.notify(this.errorMessage,2,state.isAdmin?'d':'m',state.notice);
 throw new Error();
 }// end fetch
@@ -63,7 +51,7 @@ for(let n of notifications){
     n.innerHTML = '';
 }
 //NOW PROCESS RESULT
-console.log(responseJson);
+this.main.log(responseJson,0,'FetchUtils.fetch(): responseJson');
 if(typeof responseJson=='object' && ('errorMessage' in responseJson && !this.main.utils.isNull(responseJson.errorMessage))){
    this.main.handleError(responseJson,state);
 }//
@@ -90,21 +78,13 @@ if(data.body){
 }
 //now
 let request = new Request(data.link,option);
-console.log("request headers");
-console.log(request.headers);
 try{
 let response = await window.fetch(request);
-console.log("response headers");
-console.log(response.headers);
 let responseJson = await response.json();
-console.log("response headers");
-console.log(responseJson);
+this.main.log(responseJson,0,'FetchUtils.fetchExt(): responseJson');
 return responseJson;
 }catch(error){
-if(import.meta.env.MODE=='development'){
-console.error(error);
-}
-this.main.utils.notify(this.errorMessage,2,'m');
+this.main.log(error,0,'FetchUtils.fetchExt(): fetch error');
 return false;
 }// end fetch
 }//func
@@ -152,18 +132,8 @@ params.append(p.n, p.v);
 }
 url = url + `?${params}`;
 }
+this.main.log(url,0,'FetchUtils.getApi(): fetch link');
 return url;
 }//
 
-getApi2(username,admin){
-let apiBase = this.main.config.BASE_URL;
-//
-if(!username && !admin){return apiBase;}
-if(admin){
-apiBase = apiBase + username + "/admin";
-}else{
-apiBase = apiBase + username;
-}
-return apiBase;
-}//
 }//class

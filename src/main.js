@@ -30,8 +30,8 @@ this.pbu =  new PbUtils(this);
 this.fu = new FetchUtils(this);
 this.vu = new ValidationUtils(this);
 this.tu = new TemplateUtils(this);
-this.pb = new PageBuilder(this,null);
-this.pb.isView = true;
+// this.pb = new PageBuilder(this,null);
+// this.pb.isView = true;
 this.mh = new MediaHandler(this);
 this.oldImageIds = [];
 this.state = null;
@@ -43,7 +43,7 @@ init(){
 window.addEventListener('popstate', (e) => {
     e.preventDefault();
    if(e.state){
-    console.log(e.state);
+    this.log(e.state,0,'Main.init(): popstate - evt.state');
     e.state.isPop = true;
     e.state.isInit = false;
     this.navigate(e.state);
@@ -153,12 +153,23 @@ this.navigate(nextState);
 async navigate(state){
 this.state = state;
 let component = state.component;
-if(state.cache){
-  this.cache = state.cache;
-}
 switch(component){
 case 'home':
-new Home(this,state);
+this.home = this.home || new Home(this,state);
+this.home.state = state;
+//check if its a 404 page
+if(state.hasError){
+await this.home.get404Page(state.error);
+return;
+}
+
+if(state.isInit){
+await this.home.getClientHome();
+}else if(state.isArchive){
+this.home.getArchive();
+}else{
+this.home.getPost();
+}
 break;
 case 'login':
 new Login(this,state);
@@ -167,42 +178,19 @@ case 'register':
 new Register(this,state);
 break;
 case 'dashboard':
-this.dasboard = this.dasboard || new Dashboard(this,state);
-this.dasboard.state = state;
+this.dasboard = new Dashboard(this,state);
 break;
 case 'option':
 case 'menu':
 case 'user':
 case 'category':
 case 'post':
-if(state.isAdmin){
 if(!this.dasboard){
-  let dashboardState = {component:'dashboard',username:state.username,isAdmin:true, url:`/app/${state.username}/dashboard/page/detail/0`};
+  //let dashboardState = {component:'dashboard',username:state.username,isAdmin:true, url:`/app/${state.username}/dashboard/page/detail/0`};
+  let dashboardState = this.getState(`/app/${state.username}/dashboard/page/detail/0`,true);
   this.dasboard = new Dashboard(this,dashboardState);
   }
 this.dasboard.mount(state);
-}else if(state.isView){
-  //firstly, use existing instance
-  if(!this.post){
-    this.post = new Post(this,state);
-  }
-  this.post.state = state;
-
-  //check if its a 404 page
-      if(state.hasError){
-        await this.post.get404Page(state.error);
-        return;
-      }
-
-      if(state.isInit){
-        await this.post.getClientHome();
-      }else if(state.isArchive){
-        await this.post.getArchive();
-      }else{
-        await this.post.getPost();
-      }
-}
-
 break; 
 case '404':
 this.nav404(state);
@@ -230,9 +218,36 @@ div.innerHTML=
 `;
 let replace = this.pbu.query('#replace');
 this.pbu.replace(replace,div);
-if(state.isRoot){
-console.error(`#Code: ${state.err.code} #Message: ${state.err.message} #detailedMessage: ${state.err.detailedMessage}`);
+this.log(`#Code: ${state.err.code} #Message: ${state.err.message} #detailedMessage: ${state.err.detailedMessage}`,0,'Main.nav404(): Resource not found');
+}//func
+
+/**
+ * 
+ * @param {any} message 
+ * @param {string} title
+ * @param {number} level 
+ * @param {boolean} save - wether to save to backend
+ */
+log(message,level=0,title='Log Title',save=false){
+if(import.meta.env.MODE=='development'){
+console.log(title);
+if(level==0){
+  console.log(message);
+}else if(level==1){
+  console.warn(message);
+}else{
+  console.error(message);
 }
+if(save){
+  //send 
+}
+}else{
+  //in prod
+  if(save){
+    //send
+  }
+}
+
 
 }//func
 
@@ -242,44 +257,32 @@ console.error(`#Code: ${state.err.code} #Message: ${state.err.message} #detailed
  * @param {any} state
  */
 handleError(responseJson,state){
-  if(import.meta.env.MODE=='development'){
-    console.error(responseJson.errorMessage);
-  }
-  let errorCode = Math.abs(Number(responseJson.id));
+this.log(responseJson,0,'Main.handleError(): Response with error');
+let errorCode = Math.abs(Number(responseJson.id));
+let modalNotice;
+if(state.isModal){
+  modalNotice = this.pbu.query('#promptModal .modal-notice');
+}
 switch (errorCode){
-                case 401:
-                    //Unauthorized
+                case 401://Unauthorized
                 case 403:
-                case 807:
-                    //forbidden
-                    this.utils.notify(responseJson.message,2,'d');
+                case 807://forbidden
                     break;
-                case 404:
-                    //Guest
-                    this.navigate({component:'post',url:`${state.username}/404`,isView:true,hasError:true,error:responseJson});
+                case 404://Guest
+                    this.navigate({component:'home',url:`${state.username}/404`,isView:true,hasError:true,error:responseJson});
+                    return;
+                    case 804://Not Deleted
                     break;
-                    case 804:
-                    //Not Deleted
-                    this.utils.notify(responseJson.message,1,'d');
-                    break;
-                case 805:
-                    //Session timedout
-                case 405:
-                  //not authenticated
+                case 805://Session timedout
+                case 405://not authenticated
                     this.navigate(this.getLoginState(state.username,false,state));
-                    this.utils.notify(responseJson.message,1,'m');
                     break;
-                case 806:
-                    //Limit Exceeded
-                    this.utils.notify(responseJson.message,1,'d');
+                case 806://Limit Exceeded
                     break;
-                    case 811:
-                    //Record exists
-                    this.utils.notify(responseJson.message,1,'d',state.notice);
+                    case 811://Record exists
                     break;
-                default:
-                    this.utils.notify(responseJson.message,1,'m',state.notice);
             }//
+            this.utils.notify(responseJson.message,1,'m',modalNotice);
             throw new Error();
 }//func
 
@@ -297,26 +300,6 @@ for (let property in theme) {
     icon.href = this.mh.getImageUrl(option.iconUrl,'public')  + "?v=" + Date.now();;
   }
   
-}//func
-
-async setPosts(){
-if(!this.posts$){
-let state = this.utils.clone(this.state);
-state.type = 'list';
-state.postType = 'post';
-state.isAdmin = false;
-state.isGuest = true;
-state.isMainPost = true;
-state.link = this.fu.getApi(state.username,false)+ `/home/posts/post`;
-let r = await this.fu.fetch(state);
-  if(r){
-    this.posts$ = r.posts;
-    this.categories$ = r.categories;
-    this.categoryTitles = this.categories$.map(c=>c.title);
-  }
-}
-  this.posts$ = this.posts$.filter(p=>p.contentStatus=='PUBLISH');
-
 }//func
 /**
  * 
@@ -418,9 +401,7 @@ getHomeState(username,title,id=0,archiveType='s'){
 let isHome = id==0;
 let homeState = {
 username:username,
-component:'post',
-url:isHome?`/${username}`:`/${username}/${title}/${id}`,
-href:'',
+component:'home',
 type:'detail',
 postType:'page',
 archiveType:archiveType,
@@ -429,8 +410,11 @@ title:title,
 id:Number(id),
 isHome:isHome,
 isView:true,
+isGuest:true,
 isInit:false,
-nextState:null
+nextState:null,
+url:'',
+href:''
 };
 if(isHome){
   homeState.url = `/${username}`;
@@ -453,29 +437,78 @@ getLoginState(username,isInit,nextState=null){
 let loginState = {component:'login',username:username,url:`/app/${username}/login`,isInit:isInit,nextState:nextState};
 return loginState
 }//func
+
 /**
  * 
- * @param {string} username 
- * @param {string} title 
- * @param {number} id 
+ * @param {HTMLInputElement} input 
+ * @param {boolean} isView 
+ * @param {any[]} items 
+ * @param {string} type 
+ * @returns 
  */
-getHomeState2(username,title,id=0){
-let isHome = id==0;
-let homeState = {
-username:username,
-component:'post',
-url:isHome?`/${username}`:`/${username}/${title}/${id}`,
-type:'detail',
-postType:'page',
-archiveType:'s',
-title:title,
-id:Number(id),
-isHome:isHome,
-isView:true,
-isInit:false,
-nextState:null
-};
-return homeState;
+async autoComplete(input,isView,items,type='post'){
+let form = input.closest('form.auto-complete');
+let searchTerm = input.value;
+if(!searchTerm){
+//dynamically created, populated with search
+let div = form.querySelector('.sp-div');
+div?.remove();
+}
+if(!this.vu.sanitize([input])){
+    return;
+}
+if(searchTerm.length<2){
+return;
+}
+
+        if(items && items.length>0){
+            form.querySelector('.sp-div')?.remove();
+           let div = this.pbu.createElement('div',['position-absolute','sp-div']);
+                div.style.zIndex = '2001';
+                div.innerHTML = 
+                `
+                <ul class="list-group mt-2 item-selected" style="cursor: pointer;">
+                </ul>
+                `;
+        let selectedList = div.querySelector('ul.item-selected');
+        let li;
+        for(let i of items){
+            if(type=='post'){
+                let state = this.getHomeState(i.username,i.title,i.id,'s');
+               li = this.pbu.createElement('li',['list-group-item'],`${i.title} (${i.postType})`,[{n:'data-url',v:state.url}]);
+            }else{
+                li = this.pbu.createElement('li',['list-group-item'],`${i}`);
+            }
+        
+        selectedList.appendChild(li);
+        //event
+        this.pbu.listen(li,'click',()=>{
+            if(type=='post'){
+                let url = li.getAttribute('data-url');
+            if(isView){
+                this.handleView(url,false);
+            }else{
+                input.value= this.config.HOSTNAME + url;
+            }
+            }else{
+                input.value = li.textContent;
+            }
+            
+          div.remove();
+        });
+      }
+      
+     form.appendChild(div);
+      //
+      this.pbu.listen(input,'blur',(e)=>{
+        if(e.rangeParent.parentElement.nodeName=='LI'){
+            return;
+        }
+        div?.remove();
+      });
+        }
+
+        
 }//func
 
 }//class

@@ -2,16 +2,12 @@ export const config={
   NAME:"Sellplat",
   BASE_URL:import.meta.env.VITE_API_URL,
   IMG_DELIVERY:"https://imagedelivery.net/K6bNIi4XITxUPMPcb-sFlw",
-  HOSTNAME:"http://localhost:5173",
+  HOSTNAME:import.meta.env.VITE_SITE_URL,
   RESERVED_TITLES:["home","blog"],
   SPLITTER:"|*|",
   SPLITTER2:"|**|",
-  SITE_LANGUAGE: ["English","French"],
-  TIME_ZONE:["Lagos","Toronto"],
-  CURRENCY:["USD","NGR","CAD"],
   ICONS:['bi-card-image','bi-alexa','bi-asterisk','bi-award','bi-balloon-heart'],
  ACTIVE_THEME:["Default","Blue","Green","Red","Orange"],
-
   THEMES:{
   
   default:{
@@ -53,18 +49,8 @@ export const config={
   
   SIDEBAR_LAYOUT:["NONE","LEFT", "RIGHT"],
   CONTENT_STATUS :["PUBLISH","DRAFT","TRASH"],
-  POST_TYPE :["POST","PAGE","PRODUCT","COURSE"],
+  POST_TYPE :["POST","PAGE","PRODUCT","COURSE","EVENT"],
   ROLES :["CONTRIBUTOR","AUTHOR","EDITOR"],
-  MAX_USERS:3,
-  
-
   //##########
-  NETWORK_ERROR:"Please check your internet connection",
-  SERVER_ERROR:"Something went wrong, please try again",
-  EMAIL_EXISTS_ERROR:"Email Exists",
-  MAX_USERS_ERROR: "User Limit Reached",
-
-  //######
   ALERT_TYPE:["alert-success", "alert-warning", "alert-danger"],
-  VALIDATION_REQUIRED_CLASS:['border','border-danger']
 };

@@ -9,7 +9,7 @@ export class Category {
 constructor(main,state){
 this.main = main;
 this.state = state;
-this.title = "category";
+
 //
 /**@type {boolean}*/this.isPartial = false;//when using isPartial
 /**@type {any|null}*/this.category$=null;
@@ -104,7 +104,7 @@ this.main.pbu.appendChild(this.categorySection,
 `
 <section">
 <form name="categoryForm" id="categoryForm" class="w-50 m-auto">
-${this.main.pbu.createFormControl({title:"Title",value:c.title,clasz:['title'],required:true,serialize:true})}
+${this.main.pbu.createFormControl({title:"Title",value:c.title,clasz:['title','sp-validation-required'],serialize:true})}
 ${this.main.pbu.createFormControl({title:"Description",value:c.description,clasz:['description'],serialize:true})}
 ${this.main.pbu.createSelectElement({title:"Parent",value:c.parent?.id,default:'None',postItems:[...this.categories$],clasz:['parent'],serialize:true})}
 <div class="mb-3 row">
@@ -189,10 +189,8 @@ featuredImageUrl:imageId,
 postIds:[],
 parentId:this.main.utils.isNull(parentId)?null:parentId,
 };
-this.main.utils.sign(category);
-console.log("before submit");
-console.log(category);
-let state = this.state;
+this.main.log(category,0,'Category.saveCategory(): Before submit');
+let state = this.main.utils.clone(this.state);
 state.body = JSON.stringify(category);
 let r = await this.main.fu.fetch(state);
 if(r>0){
@@ -200,7 +198,7 @@ if(r>0){
         category.id = r;
         return category;
     }else{
-        this.main.utils.notify('Saved',0,'s');
+        this.main.utils.notify('Saved',0,'m');
         this.state = this.main.replaceState(this.category$,this.state,r);
     }
 //always

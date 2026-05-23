@@ -13,20 +13,6 @@ this.config = config;
 this.pbu = new PbUtils(null);
 }//
 
-/**
- * 
- * @param {any} item 
- * @param {any} state
- */
-sign(item,state){
-let user = this.getCache('user');
-item.username= user.username;
-item.tenantId=user.tenantId;
-item.tenantUuid=user.tenantUuid;
-if(state?.type=='new' && state?.component=='post'){
-    item.authorId = user.id;
-}
-}
 getUUID(){
 return crypto.randomUUID();
 //const components = [];
@@ -58,8 +44,10 @@ return crypto.randomUUID();
  * @param {any} value 
  */
 async setCache(name,value){
-    //maybe encrypt
-localStorage.setItem(name,JSON.stringify(value));
+let jsonString = JSON.stringify(value);
+let base64String = btoa(jsonString);
+localStorage.setItem(name,base64String);
+this.main.log(base64String,0,'User data saved');
 }//func
 
 /**
@@ -68,7 +56,11 @@ localStorage.setItem(name,JSON.stringify(value));
  * @returns 
  */
 getCache(name){
-    return JSON.parse(localStorage.getItem(name));
+    let base64String = localStorage.getItem(name);
+    let jsonString = atob(base64String);
+    let data = JSON.parse(jsonString);
+    this.main.log(data,0,'User data retrieved from storage');
+    return data;
 }//
 
 /**
@@ -81,8 +73,6 @@ if(save){
 document.cookie = `${username}_subscribed=true; max-age=` + (365 * 24 * 60 * 60) + "; path=/";
 }else{
     let subscribed = document.cookie.split('; ').find(row => row.startsWith(`${username}_subscribed`));
-    console.log('subscribed');
-    console.log(subscribed);
     return subscribed == `${username}_subscribed=true`;
 }
 }//
@@ -99,7 +89,7 @@ if(input.length>1){
 result += inputToLowerCase.substring(1);
 }
 return result;
-}// # capitalize()
+}//
 
 /**
  * 
@@ -138,18 +128,6 @@ let serial = JSON.stringify(o);
 return JSON.parse(serial);
 }//   
 
-/**
- * 
- * @param {boolean} show 
- */
-getSpinner(show){
-let spinner= this.pbu.query('#spinner');
-if(show){
-this.pbu.show(spinner);
-}else{
-this.pbu.hide(spinner);
-}
-}//
 
 /**
  * 
@@ -158,102 +136,31 @@ this.pbu.hide(spinner);
  * @param {string} type 
  * @param {HTMLElement|null} customMessageDiv
  */
-//s = status: default location
-//v = validation
+
 //mainNotification
-notify(message,level,type='s',customMessageDiv=null){
-// s=statusMessage, v=validationMessage
-//validationMessage
-//statusMessage
-let notificationMessageDiv;
-if(customMessageDiv){
-    notificationMessageDiv = customMessageDiv;
-}
-else{
-switch(type){
-case 'm':
-    notificationMessageDiv = document.querySelector('#mainNotification');
-    break;
-case 'd':
-    notificationMessageDiv = document.querySelector('#dashboardNotification');
-    break;
-case 's':
-    notificationMessageDiv = document.querySelector('#statusMessage');
-    break;
-// case 'c':
-// notificationMessageDiv = customMessageDiv;
-// break;
-default :
-    notificationMessageDiv = document.querySelector('#mainNotification');
-}
-}
-
-
-
-
-//this.pbu.toggleClass(notificationMessageDiv,'text-success');
-
-//let ALERT_TYPE = ["bg-success", "bg-warning", "bg-danger"];
+notify(message,level,type='m',customMessageDiv=null){
 let clasz;
+let fixedClass = (type=='s')?'fixed-bottom':'fixed-top';
 if((level>=0) && (level<=2)){
 clasz = this.config.ALERT_TYPE[level];
 }else{
 clasz = this.config.ALERT_TYPE[1];
 }
-
-// notificationMessageDiv.innerHTML = 
-// `
-// <div class="${clasz}">
-// <p class="sp-alert"><strong>${message}</strong><button class="sp-btn btn btn-sm ms-2">X</button></p>
-// </div>
-// `;
-
+let notificationMessageDiv = document.querySelector('#mainNotification');
+if(customMessageDiv){
+    notificationMessageDiv = customMessageDiv;
+    fixedClass = '';
+}
 notificationMessageDiv.innerHTML = `
-<div class="container position-relative mt-2"> 
-<div  class="${clasz} sp-alert alert alert-dismissible fade show role="alert">
+<div class="position-relative mt-2"> 
+<div  class="${clasz} ${fixedClass} text-center mt-2 mx-auto w-50 sp-alert alert alert-dismissible fade show role="alert">
 <strong>${message}</strong> 
 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 </div>
 `;
+}//func
 
-
-
-// this.pbu.listen(closeButton,'click',()=>{
-//     notificationMessageDiv.innerHTML = '';
-// });
-
-}//;//?
-
-/**
- * 
- * @param {boolean} serialize 
- */
-getModalTemplate(serialize=false){
-let div = this.main.pbu.createElement('div',['prompt-modal']);
-div.innerHTML = 
-`
-<button id="promptModalTrigger" data-bs-toggle="modal" data-bs-target="#promptModal"></button>
-<div class="modal fade" id="promptModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <p class="modal-notice"></p>
-        <div class="modal-body">
-
-        </div>
-        <div class="modal-footer">
-          <span id="modalButton"></span>
-        </div>
-      </div>
-    </div>
-  </div>
-`;
-return serialize?div.outerHTML:div;
-}
 /**
  * 
  * @param {string} title 
@@ -263,7 +170,8 @@ return serialize?div.outerHTML:div;
  */
 setModal(title,body,isView=false){
 let promptModalSection = document.querySelector('section#promptModalSection');
-this.main.pbu.replace(promptModalSection,this.main.utils.getModalTemplate());
+
+this.main.pbu.replace(promptModalSection,this.main.tu.getModalTemplate());
 let promptModalTrigger = this.pbu.query('#promptModalTrigger');//<button>
 //let promptModal = this.pbu.query('#promptModal');
 let modalTitle = this.pbu.query('#promptModal .modal-title');//<h5>
@@ -311,56 +219,6 @@ promptModalTrigger.click();
 return modal;
 }//func
 
-
-/**
- * 
- * @returns 
- */
-getModal(){
-/**@type {HTMLDivElement} */let div = this.pbu.createElement('div',['container','mt-2','position-absolute']);
-div.style.width = '40vw';
-let dataInput = this.pbu.query('#dataInput');
-dataInput.innerHTML = '';
-dataInput.appendChild(div);
-let validationMessage = this.pbu.createElement('p',['d-none']);
-let row = this.pbu.createElement('div',['row']);
-this.pbu.appendChild(div,validationMessage,row);
-let col1 = this.pbu.createElement('div',['col-8']);
-let col2 = this.pbu.createElement('div',['col-2']);
-let col3 = this.pbu.createElement('div',['col-2']);
-this.pbu.appendChild(row,col1,col2,col3);
-/**@type {HTMLInputElement} */let input = this.pbu.createElement('input',['form-control']);
-col1.appendChild(input);
-/**@type {HTMLButtonElement} */let saveButton = this.pbu.createButton('Save');
-col2.appendChild(saveButton);
-/**@type {HTMLElement} */let closeButton = this.pbu.createButton('X',['btn-sm']);
-col3.appendChild(closeButton);
-//
-this.pbu.listen(closeButton,'click',()=>{
-div.parentElement.removeChild(div);
-});
-
-return {
-div:div,
-input:input,
-save:saveButton,
-close:closeButton,
-validationMessage:validationMessage,
-};
-}//func
-
-
-/**
- * 
- * @param {string} element
- * @param {string[]} array 
- */
-deleteItem(element,array){
-let i = array.indexOf(element);
-if(i >-1){
-array.splice(i, 1);
-}
-}//func
 /**
  * 
  * @param {string} title 
@@ -400,7 +258,10 @@ return title;
  * @param {string[]} array 
  */
 pop(element,array){
-this.deleteItem(element,array)
+let i = array.indexOf(element);
+if(i >-1){
+array.splice(i, 1);
+}
 }//func
 
 }//class

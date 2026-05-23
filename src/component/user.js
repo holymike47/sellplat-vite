@@ -137,49 +137,16 @@ website:this.websiteControl.value,
 topRole:this.topRoleSelector.value,
 password:this.passwordControl.value
 }
-this.main.utils.sign(user);
-console.log("user");
-console.log(user);
-// if(!this.validate(user)){
-//     return;
-// }
+this.main.log(user,0,'User.saveUser(): Before submit');
 let state = this.state;
 state.body = JSON.stringify(user);
 let r = await this.main.fu.fetch(state);
 if(r>0){
 this.state = this.main.replaceState(this.user$,this.state,r);
-this.main.utils.notify("Saved",0,'d');
+this.main.utils.notify("Saved",0,'m');
 }
 }//func
 
-/**
- * 
- * @param {any} user 
- * @returns 
- */
-validate(user){
-//validate fields
-//validate data integrity
-let valid = true;
-    if(this.state.id==-1){
-        for (let u of this.users$) {
-					if (u.email==user.email) {
-                        valid = false;
-						// user exists
-						this.main.utils.notify(this.main.config.EMAIL_EXISTS_ERROR,1,'m');
-						break;
-					}
-				}
-    }else{
-        let otherUsersEmail = this.users$.filter(u => u.id!=user.id).map(u => u.email);
-				if (otherUsersEmail.includes(user.email)) {
-                    valid = false;
-					// cant use an email of an existing user
-					this.main.utils.notify(this.main.config.EMAIL_EXISTS_ERROR,1,'m');
-				}
-    }
-    return valid;
-}//
 getNewUser(){
     let user={
         id:-1,

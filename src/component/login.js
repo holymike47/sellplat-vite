@@ -10,7 +10,6 @@ export class Login{
 constructor(main,state){
 this.main = main;
 this.state = state;
-this.title = "login";
 this.getTemplate();
 }//
 
@@ -72,9 +71,8 @@ state.link = this.main.fu.getApi(this.state.username,false,`login`);
 state.body = JSON.stringify(user);
 let r = await this.main.fu.fetch(state);
 if(r){
-  console.log("response");
-  console.log(r);
-  let tempData = r;
+this.main.log(r,0,`${this.state.component}.login(): tempData`);
+let tempData = r;
 this.formTitle.textContent="Please enter the token sent to you";
 let authTokenTemplate = this.main.tu.authToken();
 this.main.pbu.replace(this.authForm,authTokenTemplate.section);
@@ -88,17 +86,20 @@ this.main.pbu.listen(authTokenTemplate.button,'click',()=>{
       this.state.nextState.stateObject= tempData.stateObject;
      this.main.navigate(this.state.nextState);
     }else{
-      let username = tempData.user.username;
+    let username = tempData.user.username;
     this.main.setTheme(tempData.option);
     this.main.utils.setCache('user',tempData.user);
     this.main.utils.setCache('option',tempData.option);  
-            let dashboardState = {
-                component:'dashboard',
-                username:username,
-                url:`/app/${username}/dashboard/page/detail/0`,
-                isAdmin:true
-                };
-                this.main.navigate(dashboardState);
+            // let dashboardState = {
+            //     component:'dashboard',
+            //     username:username,
+            //     url:`/app/${username}/dashboard/page/detail/0`,
+            //     isAdmin:true,
+            //     user:tempData.user,
+            //     option:tempData.option
+            //     };
+            let dashboardState = this.main.getState(`/app/${username}/dashboard/page/detail/0`,true);
+            this.main.navigate(dashboardState);
                   }
   }
 
@@ -156,7 +157,7 @@ this.main.pbu.listen(authTokenTemplate.button,'click',()=>{
         password = passwordControl.value;
         //now submit password for reset
         state.link = this.main.fu.getApi(state.username,false,'resettoken',[{n:'type',v:'update'}]);
-        state.body = state.body = JSON.stringify({email:email,password:password});
+        state.body = state.body = JSON.stringify({email:email,password:password,token:authToken});
         let r = await this.main.fu.fetch(state);
         if(r=='ok'){
           this.formTitle.textContent="Reset successful, please login to your account";

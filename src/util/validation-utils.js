@@ -77,7 +77,6 @@ let type = el.getAttribute('type');
 let isRequired = el.classList.contains('sp-validation-required');
 let value = el.value;
 value?.trim();
-console.log(el);
 switch(type){
     case 'number':
         if(isRequired){
@@ -98,7 +97,7 @@ switch(type){
         }
             if(value){
                 let iti = this.main.intlTelInput.getInstance(el);
-                console.log(iti);
+                this.main.log(iti,0,'ValidationUtils.validate(): iti');
                 if(iti.isValidNumber()){
                     let tel = iti.getNumber();
                     el.setAttribute('data-tel',tel);
@@ -146,6 +145,7 @@ switch(type){
             }
             if(valid){
                     el.setAttribute('data-path',u.pathname);
+                    this.main.log(u.pathname,0,'ValidationUtils.validate(): url.pathname');
                 }
         } catch(error) {
             valid = false;
@@ -171,42 +171,42 @@ return valid;
  * @param {HTMLInputElement} el 
  * @returns 
  */
-url(el){
-let url = el.value;
-if(!url){
-    return true;
-}
-url = url.trim();
-let valid = false;
-let protocol = url.substring(0,url.indexOf(':'));
-if(! protocol){
-        url = 'http://' + url;
-         }
+// url(el){
+// let url = el.value;
+// if(!url){
+//     return true;
+// }
+// url = url.trim();
+// let valid = false;
+// let protocol = url.substring(0,url.indexOf(':'));
+// if(! protocol){
+//         url = 'http://' + url;
+//          }
 
- try {
-    let u = new URL(url);
-    valid = u.protocol === "http:" || u.protocol === "https:";
-    if(u.hostname!='localhost'){
-        let parts= u.hostname.split(".");
-    if(parts.length<=1){
-        valid = false;
-    }else{
-        let tld = parts[parts.length - 1];
-        valid = tld.length >= 2;
-    }
-    }
+//  try {
+//     let u = new URL(url);
+//     valid = u.protocol === "http:" || u.protocol === "https:";
+//     if(u.hostname!='localhost'){
+//         let parts= u.hostname.split(".");
+//     if(parts.length<=1){
+//         valid = false;
+//     }else{
+//         let tld = parts[parts.length - 1];
+//         valid = tld.length >= 2;
+//     }
+//     }
     
-  } catch(error) {
-    valid = false;
-  }
-  this.finalize(el,valid,'Invalid Link');
-  if(valid){
-    return url;
-  }else{
-    return false;
-  }
+//   } catch(error) {
+//     valid = false;
+//   }
+//   this.finalize(el,valid,'Invalid Link');
+//   if(valid){
+//     return url;
+//   }else{
+//     return false;
+//   }
   
-}//func
+// }//func
 
 /**
  * add or remove validation notice

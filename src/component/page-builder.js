@@ -1,5 +1,4 @@
 // @ts-check
-import { Category } from "./category";
 export class PageBuilder{
 /**
  * 
@@ -9,16 +8,10 @@ export class PageBuilder{
 constructor(main,parent){
 this.main = main;//used when using this component to create another
 this.parent = parent;
-if(parent){
-this.parent.submitPost.bind(this.parent);
-}
+this.parent.savePost?.bind(parent);
 
 this.pbInput = '';
-///**@type {string|undefined}*/this.type = undefined;
 this.isView = false;//enables contentEditable attribute to be set
-//
-//this.mediaHandler = this.main.mh;
-
 this.init = true;
 this.blockMargin  ="mb-3";
 this.pageText  = "";//??
@@ -284,7 +277,7 @@ if(n==1){
 }
     break;  
 default:
-    console.error('in Pagebuilder.setMainElement()');
+    $this.main.log('no case match',2,'PageBuilder.initilizePageBuilder.setMainElement()');
 continue;
 }
 let main = bc.querySelector('[m]');
@@ -480,9 +473,8 @@ default:
 }//for cols
 }//divs
 let serial = JSON.stringify(result);
-console.log(serial);
-//return;
-this.parent.submitPost(serial);
+this.main.log(serial,2,'PageBuilder.save() - serialized object');
+this.parent.savePost(serial);
 }//fu
 
 /**
@@ -580,7 +572,7 @@ this.main.pbu.addClass(el,add);
   this.main.pbu.addClass(parent,add);
 }
 for(let r of remove){
-  this.main.pbu.pop(r,formatedClass);
+  this.main.utils.pop(r,formatedClass);
 }
 //
 formatedClass.push(...add);
@@ -1348,7 +1340,7 @@ function removeColumn(b){
     //firstly
     let ths = theadRow.querySelectorAll('th');
      if(ths.length==1){
-        $this.main.utils.notify('Cant remove',1,'s');
+        $this.main.utils.notify('Cant remove',1,'d');
         return;
     }
     //get index of target element
@@ -1466,7 +1458,7 @@ if(!$this.isView){
     let remove = li.querySelector('.sp-remove');
     $this.main.pbu.listen(remove,'click',()=>{
         if(list.children.length==1){
-            $this.main.utils.notify('Cant Remove',1,'s');
+            $this.main.utils.notify('Cant Remove',1,'d');
             return;
         }
         li.remove();
