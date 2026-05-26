@@ -54,7 +54,7 @@ let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
 if(pathname=='/' || pathname==''){
 //isInit: application start
-let homeState = this.getHomeState('sellplat','home',0);
+let homeState = this.getHomeState('sentplat','home',0);
 homeState.isInit = true;
 this.navigate(homeState);
 return;
@@ -82,14 +82,14 @@ let length = paths.length;
 let username,archiveType,title,id;
 username = paths[1];
 let homeState;
-if(length==2){//i.e localhost/sellplat
+if(length==2){//i.e localhost/sentplat
 title = 'home';
 homeState = this.getHomeState(username,title,0);
-}else if(paths.length==4){//i.e localhost/sellplat/about/4
+}else if(paths.length==4){//i.e localhost/sentplat/about/4
 title = paths[2];
 id = Number(paths[3]);
 homeState = this.getHomeState(username,title,id);
-}else if(paths.length=5){//i.e localhost/sellplat/category/auto/4
+}else if(paths.length=5){//i.e localhost/sentplat/category/auto/4
 archiveType = paths[2];
 title = paths[3];
 id = Number(paths[4]);
@@ -113,7 +113,7 @@ handleAdmin(pathname,isInit){
 let paths = pathname.split('/');
 let loginState,username;
   if(paths.length==2){
-    //ie. sellplat.io/app
+    //ie. sentplat.io/app
     username = 'sentplat';
     loginState = this.getLoginState(username,isInit);
     this.navigate(loginState);
@@ -125,7 +125,7 @@ let loginState,username;
   if(component=='register'){
     this.navigate({component:'register',url:'/app/register',isInit:isInit});
   }else{
-    username = 'sellplat';
+    username = 'sentplat';
     loginState = this.getLoginState(username,isInit);
     this.navigate(loginState);
   }
