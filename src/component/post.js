@@ -45,22 +45,12 @@ this.subscribeText = 'If you have not yet subscribed to our newsletter, kindly d
 async setDisplay(){
    //step 1
 if(this.state.stateObject){
-//this.posts$ = this.stateObject.posts;??
-if(this.state.type=='list'){
-    this.posts$ = this.state.stateObject.posts;
-    //note: categories is sent wether list or new or edit
-    }else if(this.state.type=='new'){
-        this.post$ = this.getNewPost();
-    }else if(this.state.type=='edit'){
-        this.post$ = this.state.stateObject.post;
-        this.postTags = (this.post$.tags)?this.post$.tags.split(this.main.config.SPLITTER).map(t=>this.main.utils.capitalize(t)):[];
-    }
-////step 2
 this.categories$ = this.state.stateObject.categories;
 this.categoryTitles = this.categories$.map(c=>c.title);
 this.allTags = this.state.stateObject.allTags.map(t=>this.main.utils.capitalize(t));
-//
-for(let p of this.posts$){
+if(this.state.type=='list'){
+    this.posts$ = this.state.stateObject.posts;
+    for(let p of this.posts$){
     //set category
     for(let c of this.categories$){
         if(p.categoryId==c.id){
@@ -71,15 +61,24 @@ for(let p of this.posts$){
     //set author
 }
 this.main.log(this.posts$,0,'Post.setDisplay(): processed posts');
+    //note: categories is sent wether list or new or edit
+    }else if(this.state.type=='new'){
+        this.post$ = this.getNewPost();
+    }else if(this.state.type=='edit'){
+        this.post$ = this.state.stateObject.post;
+        this.postTags = (this.post$.tags)?this.post$.tags.split(this.main.config.SPLITTER).map(t=>this.main.utils.capitalize(t)):[];
+        for(let c of this.categories$){
+        if(this.post$.categoryId==c.id){
+            this.post$.category = c;
+            break;
+        }
+    }
+    }
+//
+
 }
 
 }//func
-
-
-
-
-
-
 
    
 async getListTemplate(){
@@ -518,6 +517,7 @@ this.postForm.appendChild(template);
 async createCategory(){
 let newCategory;
 let state = this.main.getState(`/app/${this.state.username}/category/${this.state.postType}/new/-1`);
+state.isModal = true;
 state.stateObject = this.state.stateObject;
 let categoryComponent = new Category(this.main,state);
 categoryComponent.isPartial = true;
@@ -659,7 +659,7 @@ v:{
 };
 sidebarWidgets.push(m);
 }
-// return;
+let featuredImageUrl = (this.state.postType=='post')?await this.main.mh.uploadToServer(this.featuredImageSection.querySelector('div.image-template')):''
 ///
 let post = {
 id:this.post$.id,
@@ -668,7 +668,7 @@ slug:title.toLowerCase(),
 mainContent:pbMessage,
 excerpt:this.post$.excerpt,
 postType:this.state.postType,
-featuredImageUrl:(this.state.postType=='post')?await this.main.mh.uploadToServer(this.featuredImageSection.querySelector('div.image-template')):'',
+featuredImageUrl:featuredImageUrl,
 keywords:this.post$.keywords,
 tags:(this.postTags)?this.postTags.join(this.main.config.SPLITTER):'',
 likes:this.post$.likes,
@@ -736,97 +736,4 @@ async setItems(items){
 this.state.stateObject.posts = items;
 await this.setDisplay();
 }//
-
-/**
- * 
- * @param {HTMLInputElement} input 
- * @param {boolean} isView 
- */
-async autoComplete(input,isView,type='post'){
-let form = input.closest('form.auto-complete');
-let searchTerm = input.value;
-if(!searchTerm){
-//dynamically created, populated with search
-let div = form.querySelector('.sp-div');
-div?.remove();
-}
-if(!this.main.vu.sanitize([input])){
-    return;
-}
-searchTerm = searchTerm.trim().toLowerCase();
-if(searchTerm.length<2){
-return;
-}
-//let regex = new RegExp(`${searchTerm}`, "i");
-let items;
-switch(type){
-    case 'post':
-        if(isView){
-let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(state.username,false,`/home/posts/${state.postType}/-1`,[{n:'limit',v:-1}]);
-items = await this.main.fu.fetch(state);
-}else{
-items = [...this.posts$];
-}
-items = items.filter(p=>p.title.toLowerCase().includes(searchTerm));
-        break;
-    case 'tag':
-        items = this.allTags?.filter(t=>t.includes(this.main.utils.capitalize(searchTerm)));
-        break;
-}
-        if(items && items.length>0){
-            form.querySelector('.sp-div')?.remove();
-           let div = this.main.pbu.createElement('div',['position-absolute','sp-div']);
-                div.style.zIndex = '2001';
-                div.innerHTML = 
-                `
-                <ul class="list-group mt-2 item-selected" style="cursor: pointer;">
-                </ul>
-                `;
-        let selectedList = div.querySelector('ul.item-selected');
-        let li;
-        for(let i of items){
-            if(type=='post'){
-                let state = this.main.getHomeState(i.username,i.title,i.id,'s');
-               li = this.main.pbu.createElement('li',['list-group-item'],`${i.title} (${i.postType})`,[{n:'data-url',v:state.url}]);
-            }else{
-                li = this.main.pbu.createElement('li',['list-group-item'],`${i}`);
-            }
-        
-        selectedList.appendChild(li);
-        //
-        this.main.pbu.listen(li,'click',()=>{
-            if(type=='post'){
-                let url = li.getAttribute('data-url');
-            if(isView){
-                this.main.handleView(url,false);
-            }else{
-                input.value= this.main.config.HOSTNAME + url;
-            }
-            }else{
-                input.value = li.textContent;
-            }
-            
-          div.remove();
-        });
-      }
-      let rect = input.getBoundingClientRect();
-      div.style.left =  "0px";
-      if(type=='post' && isView){
-        div.style.top =  rect.bottom  + "px";
-      }
-     
-     form.appendChild(div);
-      //
-      this.main.pbu.listen(input,'blur',(e)=>{
-        if(e.rangeParent.parentElement.nodeName=='LI'){
-            return;
-        }
-        div?.remove();
-      });
-        }
-
-        
-}//func
-
 }//class
