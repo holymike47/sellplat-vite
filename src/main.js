@@ -114,7 +114,7 @@ let paths = pathname.split('/');
 let loginState,username;
   if(paths.length==2){
     //ie. sellplat.io/app
-    username = 'sellplat';
+    username = 'sentplat';
     loginState = this.getLoginState(username,isInit);
     this.navigate(loginState);
   }
