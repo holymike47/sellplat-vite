@@ -99,7 +99,16 @@ return false;
  * @returns 
  */
 getApi(username,admin,path,searchParams){
-let apiBase = this.main.config.BASE_URL;
+//let apiBase = this.main.config.BASE_URL;
+let host = window.location.host;
+this.main.log(host,0,'FetchUtils.getApi(): host');
+let apiBase;
+if(host=='localhost:5173'){
+apiBase = this.main.config.BASE_URL;
+}else{
+apiBase = 'https://' + host + '/api';
+}
+
 let url = apiBase + '/app';
 if(admin){
 if(admin=='dashboard'){
