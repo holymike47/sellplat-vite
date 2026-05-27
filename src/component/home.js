@@ -117,7 +117,7 @@ $this.main.pbu.replace($this.subscribeDiv,p);
 
 async getClientHome(){
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(this.state.username,false,`/home/${this.state.archiveType}/${this.state.id}`,[{n:'isSite',v:state.isSite}]) ;
+state.link = this.main.fu.getApi(this.state.username,false,`/home/${this.state.archiveType}/${this.state.id}`,[{n:'isSiteDomain',v:this.main.isSiteDomain}]) ;
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
@@ -136,7 +136,7 @@ this.post$ = this.postViewDto.posts[0];
 this.state.id = this.post$.id;
 }else{
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(this.state.username,false)+ `/home/post/${this.state.id}`;
+state.link = this.main.fu.getApi(this.state.username,false,`/home/post/${this.state.id}`,[{n:'isSite',v:state.isSite}]);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.post$ = r;
@@ -206,6 +206,94 @@ mainContent.innerHTML =
  * @returns 
  */
 async getMenuTemplate(slug,clasz=[]){
+    let isMain = slug=='main';
+    let nav = this.main.pbu.createElement('nav',['navbar','navbar-expand-lg','navbar-light','bg-white','sp-navbar']);
+    if(isMain){
+        nav.innerHTML = 
+    `
+    <div class="container-fluid">
+    <a class="${this.main.pbu.showIf(this.postViewDto.option.logoUrl)} sp-detail sp-slug-link me-2" data-slug="home" href="/"><img width="60" height="60" src="${this.main.mh.getImageUrl(this.postViewDto.option.logoUrl,'public')}" /></a>
+    <a class="nav-link sp-nav-link sp-site-title sp-detail sp-slug-link" data-slug="home" href="/">${this.postViewDto.option.siteName}</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      </ul>
+      <form class="d-flex search-post auto-complete position-relative" role="search">
+        <input class="form-control me-2 search-post" type="search" placeholder="Search" aria-label="Search"/>
+        <button class="btn btn-primary search-post" type="button">Search</button>
+      </form>
+    </div>
+  </div>
+    `;
+    }else{
+        nav.innerHTML = 
+    `
+    <div class="container mx-auto">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+      </ul>
+  </div>
+    `;
+    }
+    
+let menuUl = nav.querySelector('.navbar-nav');
+let theMenu = this.postViewDto.menus.filter(m=>m.slug==slug)[0];
+if(theMenu.menuItems){
+let menuItems = JSON.parse(theMenu.menuItems);
+let navItem,navLink;
+let url,state;
+for(let m of menuItems){
+    let children = m.children;
+    let isCustom = m.postType=='custom';
+    let isHome = m.title.toLowerCase()=='home';
+      if(isCustom){
+        url = m.link;
+      }else if(isHome){
+        url = '/';
+      }else{
+        url = (this.main.isSiteDomain && !this.main.isSite)?`/${this.state.username}/${m.title}/${m.postId}`: `/${m.title}/${m.postId}`;
+      }
+        if(children.length==0){
+        navItem = this.main.pbu.createElement('li',['nav-item']);
+        menuUl.appendChild(navItem);
+        navLink = `<a href="${url}" class="sp-nav-link nav-link ${this.main.pbu.addClassIf(isHome,['sp-slug-link'])} ${this.main.pbu.addClassIf(!isCustom,['sp-detail'])}">${m.title}</a>`;
+        this.main.pbu.appendChild(navItem,navLink);
+    }else{
+    //child menu
+    navItem = this.main.pbu.createElement('li',['nav-item','dropdown']);
+    menuUl.appendChild(navItem);
+    navLink = `<a href="#"  class="dropdown-toggle sp-nav-link nav-link ${isCustom?'':'sp-detail'}" role="button" data-bs-toggle="dropdown" aria-expanded="false">${m.title}</a>`;
+    let subMenuUl = this.main.pbu.createElement('ul',['dropdown-menu']);
+    this.main.pbu.appendChild(navItem,navLink,subMenuUl);
+    for(let c of children){
+        isCustom = c.postType=='custom';
+        isHome = m.title.toLowerCase()=='home';
+        if(isCustom){
+        url = c.link;
+      }else if(isHome){
+        url = '/';
+      }else{
+        url = (this.main.isSiteDomain && !this.main.isSite)?`/${this.state.username}/${c.title}/${c.postId}`: `/${c.title}/${c.postId}`;
+      }
+        navItem = this.main.pbu.createElement('li',['nav-item']);
+        subMenuUl.appendChild(navItem);
+        navLink = `<a href="${url}" class="sp-nav-link nav-link ${this.main.pbu.addClassIf(isHome,['sp-slug-link'])} ${this.main.pbu.addClassIf(!isCustom,['sp-detail'])}">${c.title}</a>`;
+        this.main.pbu.appendChild(navItem,navLink);
+    }
+    }
+}//for
+}
+return nav;
+}//func
+
+/**
+ * 
+ * @param {string} slug 
+ * @param {string[]} clasz 
+ * @returns 
+ */
+async getMenuTemplate2(slug,clasz=[]){
     let isMain = slug=='main';
     let nav = this.main.pbu.createElement('nav',['navbar','navbar-expand-lg','navbar-light','bg-white','sp-navbar']);
     if(isMain){
@@ -294,12 +382,8 @@ let detailLinks = this.main.pbu.queryAll('a.sp-detail');
 for(let link of detailLinks){
   this.main.pbu.listen(link,'click',(e)=>{
     e.preventDefault();
-    let isInit = false;
-    if(link.classList.contains('sp-slug-link')){
-        //clicking on site logo or home to simulate site refresh
-        isInit = true;
-    }
-    this.main.handleView(link.pathname,isInit);
+    let isInit = link.classList.contains('sp-slug-link');
+    this.main.handleView(isInit,link.pathname,this.state.username);
   });
 }//for
 // search

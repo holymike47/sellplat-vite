@@ -13,11 +13,9 @@ import { FetchUtils } from './util/fetch-utils.js';
 import {ValidationUtils} from './util/validation-utils.js';
 import { TemplateUtils } from './util/template-utils.js';
 import { Home } from './component/home.js';
-import { Post } from './component/post.js';
 import { Login } from './component/login.js';
 import { Register } from './component/register.js';
 import { Dashboard } from './component/dashboard.js';
-import { PageBuilder } from './component/page-builder.js';
 import { MediaHandler } from './component/media-handler.js';
 import { th } from 'intl-tel-input/i18n';
 
@@ -35,7 +33,11 @@ this.tu = new TemplateUtils(this);
 this.mh = new MediaHandler(this);
 this.oldImageIds = [];
 this.state = null;
-
+this.sitename = 'sentplat';
+this.host = '';
+this.isSiteDomain = true;
+this.isSite = false;
+this.isSiteHome = false;
 this.init();
 //
 }//
@@ -51,6 +53,16 @@ window.addEventListener('popstate', (e) => {
 });//
 
 let pathname = window.location.pathname;
+this.host = window.location.host;
+this.isSiteDomain = this.host=='localhost:5173' || this.host=='localhost:4173' || this.host=='sentplat.com';
+let username;
+if(pathname=='' || pathname=='/'){
+  username = this.sitename;
+  this.isSiteHome = true;
+}
+if(username==this.sitename){
+  this.isSite = true;
+}
 window.history.replaceState(null,'',pathname);
 // if(pathname=='/' || pathname==''){
 // //isInit: application start
@@ -66,16 +78,18 @@ pathname = pathname.slice(0, -1);
 if(pathname.startsWith('/app')){
 this.handleAdmin(pathname,true);
 }else{
-this.handleView(true);
+this.handleView(true,pathname,username);
 }
 
 }//func
 /**
  * 
- * @param {boolean} isInit
+ * @param {boolean} isInit 
+ * @param {string} pathname
+ * @param {string|null} username 
  */
-handleView(isInit){
-this.navigate(this.getHomeState(isInit));
+handleView(isInit,pathname,username=null,){
+this.navigate(this.getHomeState(isInit,pathname,username));
 // let paths = pathname.split('/');
 // let length = paths.length;
 // let username,archiveType,title,id;
@@ -395,20 +409,12 @@ return state;
 /**
  * 
  * @param {boolean} isInit
+ * @param {string} pathname
+ * @param {string} username
  */
-getHomeState(isInit){
-let host = window.location.host;
-let pathname = window.location.pathname;
-let username,title,id,archiveType;
-let isSite = host=='localhost:5173' || host=='localhost:4173' || host=='sentplat.com';
-if(isSite){
-if(pathname=='/' || pathname==''){
-//i.e localhost:5173 or sentplat.com
-username = 'sentplat';
-title = 'home';
-id = 0;
-archiveType = 's';
-}else{
+getHomeState(isInit,pathname,username){
+let title,id,archiveType;
+if(this.isSiteDomain && !this.isSite){
 let paths = pathname.split('/');
 let length = paths.length;
 username = paths[1];
@@ -419,6 +425,7 @@ archiveType = 's';
 }else if(paths.length==4){//i.e localhost/sentplat/about/4
 title = paths[2];
 id = paths[3];
+archiveType = 's';
 }else if(paths.length=5){//i.e localhost/sentplat/category/auto/4
 archiveType = paths[2];
 title = paths[3];
@@ -427,14 +434,14 @@ id = paths[4];
 else{
   alert('handleView :not found');
 }
-}
+
 
 }else{
   //tenants have setup their domain
   //no concept of username
 if(pathname=='/' || pathname==''){
 //i.e godlysensation.com
-username = 'sp';//??
+username = (this.isSiteHome)?this.sitename : 'sp';
 title = 'home';
 id = 0;
 archiveType = 's';
@@ -462,8 +469,7 @@ else{
 let isHome = id==0;
 let homeState = {
 username:username,
-host:host,
-isSite:isSite,
+host:this.host,
 component:'home',
 type:'detail',
 postType:'page',

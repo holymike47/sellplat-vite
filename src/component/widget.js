@@ -49,6 +49,7 @@ r.el.setAttribute('wm',data.v.wm);
 
 if(displayPosts.length>0){
 for(let p of displayPosts){
+let url = (this.main.isSiteDomain && !this.main.isSite)?`/${state.username}/${p.title}/${p.id}`:`/${p.title}/${p.id}`;
 let card = 
 `
 <div class="card sp-card mb-2">
@@ -56,7 +57,7 @@ let card =
   <div class="card-body">
     <h5 class="card-title sp-h">${p.title}</h5>
     <p class="card-text sp-excerpt ${this.main.pbu.showIf(data.v.we)}">${p.excerpt}</p>
-    <a href="/${state.username}/${p.title}/${p.id}" class="btn btn-primary sp-detail">Learn More</a>
+    <a href="${url}" class="btn btn-primary sp-detail">Learn More</a>
   </div>
   <div class="card-footer sp-card-footer d-none">
   
