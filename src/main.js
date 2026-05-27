@@ -52,13 +52,12 @@ window.addEventListener('popstate', (e) => {
 
 let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
-if(pathname=='/' || pathname==''){
-//isInit: application start
-let homeState = this.getHomeState('sentplat','home',0);
-homeState.isInit = true;
-this.navigate(homeState);
-return;
-}
+// if(pathname=='/' || pathname==''){
+// //isInit: application start
+// let homeState = this.getHomeState(true);
+// this.navigate(homeState);
+// return;
+// }
   //remove last string i.e '/'
 if(pathname.endsWith('/')){
 pathname = pathname.slice(0, -1);
@@ -67,42 +66,44 @@ pathname = pathname.slice(0, -1);
 if(pathname.startsWith('/app')){
 this.handleAdmin(pathname,true);
 }else{
-this.handleView(pathname,true);
+this.handleView(true);
 }
 
 }//func
 /**
  * 
- * @param {string} pathname 
  * @param {boolean} isInit
  */
-handleView(pathname,isInit){
-let paths = pathname.split('/');
-let length = paths.length;
-let username,archiveType,title,id;
-username = paths[1];
-let homeState;
-if(length==2){//i.e localhost/sentplat
-title = 'home';
-homeState = this.getHomeState(username,title,0);
-}else if(paths.length==4){//i.e localhost/sentplat/about/4
-title = paths[2];
-id = Number(paths[3]);
-homeState = this.getHomeState(username,title,id);
-}else if(paths.length=5){//i.e localhost/sentplat/category/auto/4
-archiveType = paths[2];
-title = paths[3];
-id = Number(paths[4]);
-homeState = this.getHomeState(username,title,id,archiveType);
-}
-else{
-  alert('handleView :not found');
-}
-if(homeState){
-homeState.isInit = isInit;
-this.navigate(homeState);
-}
-}//
+handleView(isInit){
+this.navigate(this.getHomeState(isInit));
+// let paths = pathname.split('/');
+// let length = paths.length;
+// let username,archiveType,title,id;
+// username = paths[1];
+// let homeState;
+// if(length==2){//i.e localhost/sentplat
+// title = 'home';
+// homeState = this.getHomeState(username,title,0);
+// }else if(paths.length==4){//i.e localhost/sentplat/about/4
+// title = paths[2];
+// id = Number(paths[3]);
+// homeState = this.getHomeState(username,title,id);
+// }else if(paths.length=5){//i.e localhost/sentplat/category/auto/4
+// archiveType = paths[2];
+// title = paths[3];
+// id = Number(paths[4]);
+// homeState = this.getHomeState(username,title,id,archiveType);
+// }
+// else{
+//   alert('handleView :not found');
+// }
+// if(homeState){
+// homeState.isInit = isInit;
+// this.navigate(homeState);
+// }
+
+
+}//func
 
 /**
  * 
@@ -393,11 +394,102 @@ return state;
 
 /**
  * 
+ * @param {boolean} isInit
+ */
+getHomeState(isInit){
+let host = window.location.host;
+let pathname = window.location.pathname;
+let username,title,id,archiveType;
+let isSite = host=='localhost:5173' || host=='localhost:4173' || host=='sentplat.com';
+if(isSite){
+if(pathname=='/' || pathname==''){
+//i.e localhost:5173 or sentplat.com
+username = 'sentplat';
+title = 'home';
+id = 0;
+archiveType = 's';
+}else{
+let paths = pathname.split('/');
+let length = paths.length;
+username = paths[1];
+if(length==2){//i.e localhost/sentplat
+title = 'home';
+id=0;
+archiveType = 's';
+}else if(paths.length==4){//i.e localhost/sentplat/about/4
+title = paths[2];
+id = paths[3];
+}else if(paths.length=5){//i.e localhost/sentplat/category/auto/4
+archiveType = paths[2];
+title = paths[3];
+id = paths[4];
+}
+else{
+  alert('handleView :not found');
+}
+}
+
+}else{
+  //tenants have setup their domain
+  //no concept of username
+if(pathname=='/' || pathname==''){
+//i.e godlysensation.com
+username = 'sp';//??
+title = 'home';
+id = 0;
+archiveType = 's';
+}else{
+let paths = pathname.split('/');
+let length = paths.length;
+//username = paths[1];
+if(length==2){//i.e godlysensation.com/about
+// title = 'home';
+// id=0;
+// archiveType = 's';
+}else if(paths.length==3){//i.e godlysensation.com/about/4
+title = paths[1];
+id = paths[2];
+}else if(paths.length=4){//i.e godlysensation.com/category/auto/4
+archiveType = paths[1];
+title = paths[2];
+id = Number(paths[3]);
+}
+else{
+  alert('handleView :not found');
+}
+}
+}
+let isHome = id==0;
+let homeState = {
+username:username,
+host:host,
+isSite:isSite,
+component:'home',
+type:'detail',
+postType:'page',
+archiveType:archiveType,
+isArchive:archiveType!='s',
+title:title,
+id:Number(id),
+isHome:isHome,
+isView:true,
+isGuest:true,
+isInit:isInit,
+nextState:null,
+url:pathname,
+href:window.location.href
+};
+this.log(homeState,0,'Main.homeState(): homeState');
+return homeState;
+}//func
+
+/**
+ * 
  * @param {string} username 
  * @param {string} title 
  * @param {number} id 
  */
-getHomeState(username,title,id=0,archiveType='s'){
+getHomeState2(username,title,id=0,archiveType='s'){
 let isHome = id==0;
 let homeState = {
 username:username,

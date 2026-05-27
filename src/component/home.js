@@ -117,7 +117,7 @@ $this.main.pbu.replace($this.subscribeDiv,p);
 
 async getClientHome(){
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(this.state.username,false)+ `/home/${this.state.archiveType}/${this.state.id}`;
+state.link = this.main.fu.getApi(this.state.username,false,`/home/${this.state.archiveType}/${this.state.id}`,[{n:'isSite',v:state.isSite}]) ;
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
