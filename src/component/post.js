@@ -66,7 +66,6 @@ this.main.log(this.posts$,0,'Post.setDisplay(): processed posts');
         this.post$ = this.getNewPost();
     }else if(this.state.type=='edit'){
         this.post$ = this.state.stateObject.post;
-        this.postTags = (this.post$.tags)?this.post$.tags.split(this.main.config.SPLITTER).map(t=>this.main.utils.capitalize(t)):[];
         for(let c of this.categories$){
         if(this.post$.categoryId==c.id){
             this.post$.category = c;
@@ -576,7 +575,7 @@ this.post$.categoryIds = pcn;
 }//
 //############# TAGS ######################
 renderTags(){
-this.postTags = this.postTags || [];
+this.postTags = (this.post$.tags)?this.post$.tags.split(this.main.config.SPLITTER).map(t=>this.main.utils.capitalize(t)):[];
 this.postTagsListDiv.innerHTML = ''	;
 for(let t of this.postTags){
 let span = 
