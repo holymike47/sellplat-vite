@@ -107,7 +107,7 @@ if(host=='localhost:5173' || host=='localhost:4173'){
 apiBase = this.main.config.BASE_URL;
 }else{
 //apiBase = 'https://' + host + '/api';
-apiBase = 'https://api.sentplat.com/api';
+apiBase = 'https://sentplat.com/api';
 }
 
 let url = apiBase + '/app';
