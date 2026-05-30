@@ -49,7 +49,7 @@ r.el.setAttribute('wm',data.v.wm);
 
 if(displayPosts.length>0){
 for(let p of displayPosts){
-let url = (this.main.isSiteDomain && !this.main.isSite)?`/${state.username}/${p.title}/${p.id}`:`/${p.title}/${p.id}`;
+let url = this.main.getHomeLink(state.username,p.title,p.id);
 let card = 
 `
 <div class="card sp-card mb-2">

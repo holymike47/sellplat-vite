@@ -117,7 +117,7 @@ $this.main.pbu.replace($this.subscribeDiv,p);
 
 async getClientHome(){
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(this.state.username,false,`/home/${this.state.archiveType}/${this.state.id}`,[{n:'isSiteDomain',v:this.main.isSiteDomain}]) ;
+state.link = this.main.fu.getApi(this.state.username,false,`/home/${this.state.archiveType}/${this.state.id}`) ;
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
@@ -136,7 +136,7 @@ this.post$ = this.postViewDto.posts[0];
 this.state.id = this.post$.id;
 }else{
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(this.state.username,false,`/home/post/${this.state.id}`,[{n:'isSite',v:state.isSite}]);
+state.link = this.main.fu.getApi(this.state.username,false,`/home/post/${this.state.id}`);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.post$ = r;
@@ -252,7 +252,7 @@ for(let m of menuItems){
       }else if(isHome){
         url = '/';
       }else{
-        url = (this.main.isSiteDomain && !this.main.isSite)?`/${this.state.username}/${m.title}/${m.postId}`: `/${m.title}/${m.postId}`;
+        url = this.main.getHomeLink(this.state.username,m.title,m.postId);
       }
         if(children.length==0){
         navItem = this.main.pbu.createElement('li',['nav-item']);
@@ -274,7 +274,7 @@ for(let m of menuItems){
       }else if(isHome){
         url = '/';
       }else{
-        url = (this.main.isSiteDomain && !this.main.isSite)?`/${this.state.username}/${c.title}/${c.postId}`: `/${c.title}/${c.postId}`;
+        url = this.main.getHomeLink(this.state.username,c.title,c.postId);
       }
         navItem = this.main.pbu.createElement('li',['nav-item']);
         subMenuUl.appendChild(navItem);
