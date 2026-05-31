@@ -180,12 +180,14 @@ this.pushState(state);
  * @param {any|null} responseJson
  */
 nav404(state=null,responseJson = null){
-let message = state?.message || "Something went wrong";
+let message = state?.message || "You may have mistyped the address or the page may have been moved";
 let div= this.pbu.createElement('div');
 div.innerHTML=
 `
-<h3>Not Found</3>
+<h3>404 Not Found</3>
+<h5>We couldn’t find the page you were looking for.</h5>
 <p>${message}</p>
+<a href="/" class="btn btn-primary">HOMEPAGE</>
 `;
 this.pbu.mount(div);
 this.log( state?.responseJson,0,'Main.nav404(): responseJson');

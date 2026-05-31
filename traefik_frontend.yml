@@ -1,0 +1,83 @@
+http:
+  routers:
+    sellplat-frontend-jwodl7-router-11:
+      rule: Host(`*.sentplat.com`)
+      service: sellplat-frontend-jwodl7-service-11
+      middlewares:
+        - redirect-to-https
+      entryPoints:
+        - web
+    sellplat-frontend-jwodl7-router-websecure-11:
+      rule: Host(`*.sentplat.com`)
+      service: sellplat-frontend-jwodl7-service-11
+      middlewares: []
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+    sellplat-frontend-jwodl7-router-12:
+      rule: Host(`sentplat.com`)
+      service: sellplat-frontend-jwodl7-service-12
+      middlewares:
+        - redirect-to-https
+      entryPoints:
+        - web
+    sellplat-frontend-jwodl7-router-websecure-12:
+      rule: Host(`sentplat.com`)
+      service: sellplat-frontend-jwodl7-service-12
+      middlewares: []
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+    sellplat-frontend-jwodl7-router-14:
+      rule: Host(`godlysensation.sentplat.com`)
+      service: sellplat-frontend-jwodl7-service-14
+      middlewares:
+        - redirect-to-https
+      entryPoints:
+        - web
+    sellplat-frontend-jwodl7-router-websecure-14:
+      rule: Host(`godlysensation.sentplat.com`)
+      service: sellplat-frontend-jwodl7-service-14
+      middlewares: []
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+    sellplat-frontend-jwodl7-router-15:
+      rule: Host(`godlysensation.com`)
+      service: sellplat-frontend-jwodl7-service-15
+      middlewares:
+        - redirect-to-https
+      entryPoints:
+        - web
+    sellplat-frontend-jwodl7-router-websecure-15:
+      rule: Host(`godlysensation.com`)
+      service: sellplat-frontend-jwodl7-service-15
+      middlewares: []
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+  services:
+    sellplat-frontend-jwodl7-service-11:
+      loadBalancer:
+        servers:
+          - url: http://sellplat-frontend-jwodl7:80
+        passHostHeader: true
+    sellplat-frontend-jwodl7-service-12:
+      loadBalancer:
+        servers:
+          - url: http://sellplat-frontend-jwodl7:80
+        passHostHeader: true
+    sellplat-frontend-jwodl7-service-14:
+      loadBalancer:
+        servers:
+          - url: http://sellplat-frontend-jwodl7:80
+        passHostHeader: true
+    sellplat-frontend-jwodl7-service-15:
+      loadBalancer:
+        servers:
+          - url: http://sellplat-frontend-jwodl7:80
+        passHostHeader: true
