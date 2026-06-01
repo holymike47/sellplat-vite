@@ -31,14 +31,14 @@ http:
       tls:
         certResolver: letsencrypt
     sellplat-frontend-jwodl7-router-20:
-      rule: HostRegexp(`^(?!api\.)[a-zA-Z0-9-]+\.sentplat\.com$`)
+      rule: Host(`*.sentplat.com`)
       service: sellplat-frontend-jwodl7-service-20
       middlewares:
         - redirect-to-https
       entryPoints:
         - web
     sellplat-frontend-jwodl7-router-websecure-20:
-      rule: HostRegexp(`^(?!api\.)[a-zA-Z0-9-]+\.sentplat\.com$`)
+      rule: Host(`*.sentplat.com`)
       service: sellplat-frontend-jwodl7-service-20
       middlewares: []
       entryPoints:

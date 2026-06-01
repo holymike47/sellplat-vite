@@ -103,7 +103,7 @@ getApi(username,admin,path,searchParams){
 let host = window.location.host;
 this.main.log(host,0,'FetchUtils.getApi(): host');
 let apiBase;
-if(host=='localhost:5173' || host=='localhost:4173'){
+if(host=='localhost:5173'){
 apiBase = this.main.config.BASE_URL;
 }else{
 //apiBase = 'https://' + host + '/api';
