@@ -107,7 +107,7 @@ if(host=='localhost:5173'){
 apiBase = this.main.config.BASE_URL;
 }else{
 //apiBase = 'https://' + host + '/api';
-apiBase = 'https://api.sentplat.com/api';
+apiBase = 'https://sellplat.codecapt.com/api';
 }
 
 let url = apiBase + '/app';
