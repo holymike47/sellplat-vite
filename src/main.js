@@ -236,7 +236,8 @@ this.log( state?.responseJson,0,'Main.nav404(): responseJson');
  * @param {boolean} save - wether to save to backend
  */
 log(message,level=0,title='Log Title',save=false){
-if(import.meta.env.MODE=='development'){
+//if(import.meta.env.MODE=='development'){  
+if(true){
 console.log(title);
 if(level==0){
   console.log(message);
