@@ -41,7 +41,42 @@ this.isSiteHome = false;
 this.init();
 //
 }//
+
+
 init(){
+window.addEventListener('popstate', (e) => {
+    e.preventDefault();
+   if(e.state){
+    this.log(e.state,0,'Main.init(): popstate - evt.state');
+    e.state.isPop = true;
+    e.state.isInit = false;
+    this.navigate(e.state);
+   }
+});//
+
+let pathname = window.location.pathname;
+window.history.replaceState(null,'',pathname);
+this.host = window.location.host;
+this.log(this.host,0,'Main.init(): host');
+this.isSiteDomain = this.host=='localhost:5173' || this.host=='localhost:4173' || this.host=='sentplat.com';
+let username;
+if(this.isSiteDomain && (pathname=='' || pathname=='/')){
+  this.isSiteHome = this.isSite = true;
+  username = this.sitename;
+}
+//remove last string i.e '/'
+if(pathname.endsWith('/')){
+pathname = pathname.slice(0, -1);
+}
+
+if(pathname.startsWith('/app')){
+this.handleAdmin(pathname,true);
+}else{
+this.handleView(true,pathname,username);
+}
+
+}//func
+init2(){
 window.addEventListener('popstate', (e) => {
     e.preventDefault();
    if(e.state){

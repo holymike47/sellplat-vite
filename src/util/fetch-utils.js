@@ -109,7 +109,8 @@ apiBase = this.main.config.BASE_URL;
 //apiBase = 'https://' + host + '/api';
 apiBase = 'https://sellplat.codecapt.com/api';
 }
-
+//for now
+apiBase = 'https://sellplat.codecapt.com/api';
 let url = apiBase + '/app';
 if(admin){
 if(admin=='dashboard'){
