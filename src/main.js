@@ -77,7 +77,7 @@ if(this.isSiteDomain){
 }
 
 if(this.isDev()){
-this.username = 'sp2';
+this.username = 'sp';
 }
 
 this.isInit = true;

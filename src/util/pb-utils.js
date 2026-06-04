@@ -544,10 +544,18 @@ this.show(child);
 /**
  * 
  * @param {HTMLElement} component 
+ * @param {string} type
  */
-mount(component){
-let replace = this.query('#replace');
-this.replace(replace,component);
+mount(component,type='b'){
+let section;
+if(type=='b'){
+section = this.query('#replace');
+}else if(type=='h'){
+section = this.query('#mainHeader');
+}else if(type=='f'){
+section = this.query('#mainFooter');
+}
+this.replace(section,component);
 }//
 
 /**

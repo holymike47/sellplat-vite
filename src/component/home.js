@@ -26,6 +26,94 @@ this.main.pbu.appendChild(this.homeComponent,
 `
 <!--viewContainer-->
 <div id = "viewContainer" class="container-fluid" style="min-height: 100vh;">
+<main id="mainContent" class="sp-container">
+     <!--Row-->
+<div class="row sp-row">
+  <div class="content ${this.main.pbu.addClassIf(p.sidebarType=='NONE',['col-12'],['col-md-9','order-2'])}">
+<!--Post title and feature image-->
+<div class="cover ${this.main.pbu.showIf(p.slug!='home')} ${this.main.pbu.addClassIf(!p.featuredImageUrl,['p-4', 'p-md-5','mb-4','rounded','text-body-emphasis', 'bg-body-secondary'])}">
+  <div class="featured-image ${this.main.pbu.showIf(p.featuredImageUrl)}">
+      <img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="featured-image d-block mx-auto"/>
+    </div>
+  <div class="px-0">
+    <h1 class="display-4 fst-italic title text-center">${p.title}</h1>
+  </div>
+  
+</div><!--#Post title and feature image-->
+
+<div class="post-meta ${this.main.pbu.showIf(this.state.postType!='page')}">
+<a href="${this.main.getHomeLink('post','c',p.categoryTitle,p.categoryId)}" class="btn btn-sm mx-1">${p.categoryTitle}</a>
+</div>
+  
+<div class="main-content">
+</div>
+
+<div class="subscribe">
+</div>
+
+  </div>
+<!--Right sidebar-->
+  <div class="sidebar position-sticky ${this.main.pbu.showIf(p.sidebarType!='NONE')}
+  ${this.main.pbu.addClassIf(p.sidebarType='LEFT',['col-md-3','order-1'])}
+  ${this.main.pbu.addClassIf(p.sidebarType='right',['col-md-3','order-3'])}
+  "> 
+  </div>
+  <!--#Right sidebar-->
+</div>
+<!--#Row-->
+<section id="promptModalSection">
+
+</section>
+</main>
+</div>
+<!--#viewContainer-->
+`  
+);
+
+this.mainContentDiv = this.homeComponent.querySelector('div.main-content');
+this.sidebarDiv = $this.homeComponent.querySelector('div.sidebar');
+this.subscribeDiv = $this.homeComponent.querySelector('div.subscribe');
+
+if(!this.state.isArchive){
+await updateView();
+}
+return this.homeComponent;
+
+async function updateView(){
+$this.pb.isView = $this.widget.isView = true;
+$this.pb.pbInput = $this.post$.mainContent;
+let responseDiv = await $this.pb.initilizePageBuilder($this.state.type);
+$this.main.pbu.replace($this.mainContentDiv,responseDiv);
+//subscription
+if(p.showSubscribe && ! $this.main.utils.genCookie(false,$this.state.username)){
+let cta = $this.pb.getCtaComponent({type:'detail',v:{headingText:'SUBSCRIBE',bodyText:$this.subscribeText,bText:'SUBSCRIBE'},dClass:[],bclasz:['subscribe']});
+let p = cta.querySelector('[p]');
+$this.main.pbu.replace($this.subscribeDiv,p);
+}
+//add widgets to sidebar
+/**@type {any[]}*/let sidebarWidgets = JSON.parse($this.post$.sidebarWidgets)||[];
+    for(let w of sidebarWidgets){
+        switch(w.m){
+            case 'recentPosts':
+                let recentPostsWidget = await $this.widget.getRecentPostsWidget({v:w.v});
+                let recentPostsHeading = $this.main.pbu.createElement('h3',[],'Recent Posts');
+                $this.main.pbu.appendChild($this.sidebarDiv,recentPostsHeading,recentPostsWidget.querySelector('[m]') );
+                break;
+        }//switch
+    }//for
+
+}
+
+}//func
+
+async getTemplate2() {
+let $this=this;
+let p = this.post$;
+this.homeComponent = this.main.pbu.createElement('main',['home-component']);
+this.main.pbu.appendChild(this.homeComponent,
+`
+<!--viewContainer-->
+<div id = "viewContainer" class="container-fluid" style="min-height: 100vh;">
 <header class="header mb-4">
 ${this.main.pbu.outerHTML(this.headerTemplate?this.headerTemplate:this.getMenuTemplate('main'))}
 </header>
@@ -120,9 +208,12 @@ let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
 this.main.log(this.postViewDto,0,'Post.getClientHome(): this.postViewDto');
-this.headerTemplate = await this.getMenuTemplate('main');
-this.footerTemplate = await this.getMenuTemplate('footer');
 this.main.setTheme(this.postViewDto.option);
+this.main.pbu.mount(await this.getMenuTemplate('main'),'h');
+this.main.pbu.mount(await this.getMenuTemplate('footer'),'f');
+// this.headerTemplate = await this.getMenuTemplate('main');
+// this.footerTemplate = await this.getMenuTemplate('footer');
+
 (state.isArchive)?await this.getArchive(): await this.getPost();
 }
 }//func
@@ -226,9 +317,10 @@ async getMenuTemplate(slug,clasz=[]){
     }else{
         nav.innerHTML = 
     `
-    <div class="container mx-auto">
+    <div class="container-fluid">
       <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
       </ul>
+      <p class="mb-0 float-end"><a class="login sp-route-link sp-admin" href="/app/login">Login</a></p>
   </div>
     `;
     }
@@ -248,7 +340,7 @@ for(let m of menuItems){
       }else if(isHome){
         url = '/';
       }else{
-        url = this.main.getHomeLink(this.state.username,m.title,m.postId);
+        url = this.main.getHomeLink(m.postType,'s',m.title,m.postId);
       }
         if(children.length==0){
         navItem = this.main.pbu.createElement('li',['nav-item']);
@@ -270,7 +362,7 @@ for(let m of menuItems){
       }else if(isHome){
         url = '/';
       }else{
-        url = this.main.getHomeLink(this.state.username,c.title,c.postId);
+        url = this.main.getHomeLink(c.postType,'s',c.title,c.postId);
       }
         navItem = this.main.pbu.createElement('li',['nav-item']);
         subMenuUl.appendChild(navItem);
@@ -280,23 +372,11 @@ for(let m of menuItems){
     }
 }//for
 }
+this.main.addRouteEvents(nav);
 return nav;
 }//func
 
 addViewEvents(){
-// let routeLinks = this.main.pbu.queryAll('a.sp-route-link'); 
-// for(let link of routeLinks){
-//   this.main.pbu.listen(link,'click',(e)=>{
-//     e.preventDefault();
-//     let isInit = link.classList.contains('sp-slug-link');
-//     if(link.classList.contains('sp-detail')){
-//       this.main.handleView(link.pathname,isInit);
-//     }else if(link.classList.contains('sp-admin')){
-//       this.main.handleAdmin(link.pathname,isInit);
-//     }
-    
-//   });
-// }//for
 this.main.addRouteEvents(this.getTemplate());
 // search
 let searchForm = this.main.pbu.query('form.search-post');
