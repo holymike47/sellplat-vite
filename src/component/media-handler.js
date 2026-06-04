@@ -148,7 +148,7 @@ modal.dismiss.click();
 });
 });
 //
-this.main.pbu.listen(remove,'click',()=>{
+this.main.pbu.listen(remove,'click',async ()=>{
 //hide image or icon
 if(image.src){
 this.removeImage(template);
@@ -159,22 +159,6 @@ this.main.pbu.hide(remove);
 });
 //finally
 return template;
-
-// function removeImage(){
-// if(image.src?.includes('imagedelivery')){
-// $this.deleteFromServer({src:image.src});
-// }
-// image.src='';
-// $this.main.pbu.hide(image);
-// uploadButton.textContent = 'Upload';
-// }//inner
-// function removeIcon(){
-// let iconClass = ['bi','main-icon','fs-1','mb-4'];//
-// icon.removeAttribute('class');
-// icon.removeAttribute('icon');
-// $this.main.pbu.addClass(icon,[...iconClass]);
-// $this.main.pbu.hide(icon);
-// }
 }//func
 
 ///
@@ -182,9 +166,15 @@ return template;
  * 
  * @param {any} t - image template
  */
-removeImage(t){
+async removeImage(t){
 if(t.image.src?.includes('imagedelivery')){
-this.deleteFromServer({src:t.image.src});
+let r = await this.deleteFromServer({src:t.image.src});
+if(r==true){
+this.main.utils.notify('Image deleted',0,'m');
+}else{
+    this.main.utils.notify('Error deleting image',2,'m');
+    return;
+}
 }
 t.image.src='';
 this.main.pbu.hide(t.image);
@@ -390,16 +380,21 @@ let image = imageTemplate.querySelector('.main-image');
 let input = imageTemplate.querySelector('.sp-input');
 let imageId;
 if(image.src?.includes("/images")){
+//using image from public folder
 imageId = image.src.substring(image.src.indexOf('/images'));
+}else if(image.src?.includes('imagedelivery')){
+    //already have an image
+    let paths = image.src.split('/');
+    imageId = paths[4];
 }else if(image.src?.startsWith('data:image')){
 //firstly, get upload link
-let state = this.main.utils.clone(this.main.state);
-state.link = this.main.fu.getApi(state.username,true,'token');
 let data = {
 "type":"cloudflare",
 "job":"uploadLink"
 };
+let state = this.main.utils.clone(this.main.state);
 state.body = JSON.stringify(data);
+state.link = this.main.fu.getApi('app/token');
 let r = await this.main.fu.fetch(state);
 this.main.log(r,0,`MediaHandler.uploadToServer(): cloudflare upload link`);
 if(r){
@@ -412,24 +407,29 @@ link:r.result.uploadURL,
 body:formData
 };
 r = await this.main.fu.fetchExt(data);
-if(r){
+if(r.success==true){
+    this.main.log(r,0,`MediaHandler.uploadToServer(): cloudflare upload response`);
     imageId = r.result.id;
     image.src = this.main.mh.getImageUrl(r.result.id,'public');
+}else{
+    this.main.utils.notify("Error uploading image",2,'d');
+    throw new Error();
 }
 }
-}else if(image.src?.includes('imagedelivery')){
-    let paths = image.src.split('/');
-    imageId = paths[4];
+}else{
+    //nothing uploaded
+    imageId = '';
+}
+let oldImageId = imageTemplate.querySelector('.main-image').getAttribute('oldImageId');
+if(oldImageId?.includes('imagedelivery')){
+    //prepare for delete
+    this.main.oldImageIds.push(oldImageId.split('/')[4]);
 }
 return imageId;
 }catch(error){
 this.main.utils.notify("Error uploading image",2,'d');
 this.main.log(error,0,'MediaHandler.uploadToServert(): fetch error');
-}finally{
-let oldImageId = imageTemplate.querySelector('.main-image').getAttribute('oldImageId');
-if(oldImageId?.includes('imagedelivery')){
-    this.main.oldImageIds.push(oldImageId.split('/')[4]);
-}
+throw new Error();
 }
 }//func
 /**
@@ -466,16 +466,16 @@ imageIds = [...data.imageIds];
 
 if(imageIds.length>0){
 this.main.log(imageIds,0,`MediaHandler.deleteFromServer(): imageids`);
-state.link = this.main.fu.getApi(state.username,true,'token');
 let input = {
 "type":"cloudflare",
 "job":"delete",
 "imageIds":imageIds
 };
+state.link = this.main.fu.getApi('app/token');
 state.body = JSON.stringify(input);
-this.main.fu.fetch(state).then(r=>{
+let r = await this.main.fu.fetch(state);
 this.main.log(r,0,`MediaHandler.deleteFromServer(): image deleted?`);
-});
+return r;
 }
 }//func
 

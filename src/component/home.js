@@ -1,5 +1,4 @@
 // @ts-check
-import { Category } from "./category";
 import { PageBuilder } from "./page-builder";
 import { Widget } from "./widget";
 export class Home{
@@ -25,15 +24,15 @@ this.homeComponent = this.main.pbu.createElement('main',['home-component']);
 this.main.pbu.appendChild(this.homeComponent,
 `
 <!--viewContainer-->
-<div id = "viewContainer" class="container-fluid" style="min-height: 100vh;">
+<div id = "viewContainer" class="container" style="min-height: 100vh;">
 <main id="mainContent" class="sp-container">
      <!--Row-->
 <div class="row sp-row">
   <div class="content ${this.main.pbu.addClassIf(p.sidebarType=='NONE',['col-12'],['col-md-9','order-2'])}">
 <!--Post title and feature image-->
 <div class="cover ${this.main.pbu.showIf(p.slug!='home')} ${this.main.pbu.addClassIf(!p.featuredImageUrl,['p-4', 'p-md-5','mb-4','rounded','text-body-emphasis', 'bg-body-secondary'])}">
-  <div class="featured-image ${this.main.pbu.showIf(p.featuredImageUrl)}">
-      <img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="featured-image d-block mx-auto"/>
+  <div class="featured-image text-center ${this.main.pbu.showIf(p.featuredImageUrl)}">
+      <img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="featured-image img-fluid mx-auto"/>
     </div>
   <div class="px-0">
     <h1 class="display-4 fst-italic title text-center">${p.title}</h1>
@@ -41,8 +40,8 @@ this.main.pbu.appendChild(this.homeComponent,
   
 </div><!--#Post title and feature image-->
 
-<div class="post-meta ${this.main.pbu.showIf(this.state.postType!='page')}">
-<a href="${this.main.getHomeLink('post','c',p.categoryTitle,p.categoryId)}" class="btn btn-sm mx-1">${p.categoryTitle}</a>
+<div class="post-meta ${this.main.pbu.showIf(p.category)}">
+<a href="${this.main.getHomeLink('post','c',p.category?.title,p.category?.id)}" class="btn btn-sm mx-1">${p.category?.title}</a>
 </div>
   
 <div class="main-content">
@@ -106,100 +105,6 @@ $this.main.pbu.replace($this.subscribeDiv,p);
 
 }//func
 
-async getTemplate2() {
-let $this=this;
-let p = this.post$;
-this.homeComponent = this.main.pbu.createElement('main',['home-component']);
-this.main.pbu.appendChild(this.homeComponent,
-`
-<!--viewContainer-->
-<div id = "viewContainer" class="container-fluid" style="min-height: 100vh;">
-<header class="header mb-4">
-${this.main.pbu.outerHTML(this.headerTemplate?this.headerTemplate:this.getMenuTemplate('main'))}
-</header>
-<main id="mainContent" class="sp-container">
-     <!--Row-->
-<div class="row sp-row">
-  <div class="content ${this.main.pbu.addClassIf(p.sidebarType=='NONE',['col-12'],['col-md-9','order-2'])}">
-<!--Post title and feature image-->
-<div class="cover ${this.main.pbu.showIf(p.slug!='home')} ${this.main.pbu.addClassIf(!p.featuredImageUrl,['p-4', 'p-md-5','mb-4','rounded','text-body-emphasis', 'bg-body-secondary'])}">
-  <div class="featured-image ${this.main.pbu.showIf(p.featuredImageUrl)}">
-      <img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="featured-image d-block mx-auto"/>
-    </div>
-  <div class="px-0">
-    <h1 class="display-4 fst-italic title text-center">${p.title}</h1>
-  </div>
-  
-</div><!--#Post title and feature image-->
-
-<div class="post-meta ${this.main.pbu.showIf(this.state.postType!='page')}">
-<a href="/${this.state.username}/category/${p.categoryTitle}/${p.categoryId}" class="btn btn-sm mx-1">${p.categoryTitle}</a>
-</div>
-  
-<div class="main-content">
-</div>
-
-<div class="subscribe">
-</div>
-
-  </div>
-<!--Right sidebar-->
-  <div class="sidebar position-sticky ${this.main.pbu.showIf(p.sidebarType!='NONE')}
-  ${this.main.pbu.addClassIf(p.sidebarType='LEFT',['col-md-3','order-1'])}
-  ${this.main.pbu.addClassIf(p.sidebarType='right',['col-md-3','order-3'])}
-  "> 
-  </div>
-  <!--#Right sidebar-->
-</div>
-<!--#Row-->
-<section id="promptModalSection">
-
-</section>
-</main>
-<footer class="footer">
-${this.main.pbu.outerHTML(this.footerTemplate?this.footerTemplate:this.getMenuTemplate('footer'))}
-<span class="mb-0 float-end"> <a class="login sp-route-link sp-admin" href="/app/login">Login</a></span>
-</footer>
-</div>
-<!--#viewContainer-->
-`  
-);
-
-this.mainContentDiv = this.homeComponent.querySelector('div.main-content');
-this.sidebarDiv = $this.homeComponent.querySelector('div.sidebar');
-this.subscribeDiv = $this.homeComponent.querySelector('div.subscribe');
-
-if(!this.state.isArchive){
-await updateView();
-}
-return this.homeComponent;
-
-async function updateView(){
-$this.pb.isView = $this.widget.isView = true;
-$this.pb.pbInput = $this.post$.mainContent;
-let responseDiv = await $this.pb.initilizePageBuilder($this.state.type);
-$this.main.pbu.replace($this.mainContentDiv,responseDiv);
-//subscription
-if(p.showSubscribe && ! $this.main.utils.genCookie(false,$this.state.username)){
-let cta = $this.pb.getCtaComponent({type:'detail',v:{headingText:'SUBSCRIBE',bodyText:$this.subscribeText,bText:'SUBSCRIBE'},dClass:[],bclasz:['subscribe']});
-let p = cta.querySelector('[p]');
-$this.main.pbu.replace($this.subscribeDiv,p);
-}
-//add widgets to sidebar
-/**@type {any[]}*/let sidebarWidgets = JSON.parse($this.post$.sidebarWidgets)||[];
-    for(let w of sidebarWidgets){
-        switch(w.m){
-            case 'recentPosts':
-                let recentPostsWidget = await $this.widget.getRecentPostsWidget({v:w.v});
-                let recentPostsHeading = $this.main.pbu.createElement('h3',[],'Recent Posts');
-                $this.main.pbu.appendChild($this.sidebarDiv,recentPostsHeading,recentPostsWidget.querySelector('[m]') );
-                break;
-        }//switch
-    }//for
-
-}
-
-}//func
 
 async getClientHome(){
 let state = this.main.utils.clone(this.state);;
@@ -225,7 +130,7 @@ this.post$ = this.postViewDto.posts[0];
 this.state.id = this.post$.id;
 }else{
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(this.state.username,false,`/home/post/${this.state.id}`);
+state.link = this.main.fu.getApi(state.url);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.post$ = r;
@@ -377,7 +282,7 @@ return nav;
 }//func
 
 addViewEvents(){
-this.main.addRouteEvents(this.getTemplate());
+this.main.addRouteEvents(this.homeComponent);
 // search
 let searchForm = this.main.pbu.query('form.search-post');
 let searchControl = searchForm.querySelector('input.search-post');

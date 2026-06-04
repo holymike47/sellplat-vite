@@ -337,23 +337,23 @@ let displayPosts = (posts)?posts: this.posts$.filter(p=>p.postType==this.state.p
 for(let p of displayPosts){
 let i = {
 id:p.id,
-href:`/${this.state.username}/${p.title}/${p.id}`,
+href:this.main.getHomeLink(p.postType,'s',p.title,p.id),
 titles:[p.title,(p.category?.title)?p.category.title:'None',(p.author)?p.author.firstName:'',p.postType,p.contentStatus],
-editHref:this.main.getLink('post',this.state.postType,'edit',p.id),
+editHref:this.main.getLink('post',p.postType,'edit',p.id),
 deleteHref:``
 };
 if(!isPost){
     i = {
     id:p.id,
-    href:`/${this.state.username}/${p.title}/${p.id}`,
+    href:this.main.getHomeLink(p.postType,'s',p.title,p.id),
     titles:[p.title,p.contentStatus],
-    editHref:`/app/${this.state.username}/post/${this.state.postType}/edit/${p.id}`,
+    editHref:this.main.getLink('post',p.postType,'edit',p.id),
     deleteHref:``
 };
 }
 items.push(i);
 }//for
-let menuTable = this.main.pbu.createTable({username:this.state.username,titles:titles,posts:items});
+let menuTable = this.main.pbu.createTable({titles:titles,posts:items});
 this.main.pbu.replace(this.postListTableSection,menuTable);
 }//func
 

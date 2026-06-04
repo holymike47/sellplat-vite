@@ -149,9 +149,9 @@ let posts = [];
 for(let c of this.displayCategories){
 let p = {
 id:c.id,
-href:`/${this.state.username}/category/${c.title}/${c.id}`,
+href:this.main.getHomeLink(c.postType,'c',c.title,c.id),
 titles:[c.title,c.description,c.postType],
-editHref:this.main.getLink('category',this.state.postType,'edit',c.id),
+editHref:this.main.getLink('category',c.postType,'edit',c.id),
 deleteHref:``
 };
 posts.push(p);

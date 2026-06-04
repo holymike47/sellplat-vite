@@ -68,7 +68,6 @@ if(this.isSiteDomain){
   if(this.isSite){
       //root
       this.username = this.sitename;
-      this.isSiteHome = true;
   }else{
     this.username = this.host.split('.')[0];
   }
@@ -77,7 +76,8 @@ if(this.isSiteDomain){
 }
 
 if(this.isDev()){
-this.username = 'sp';
+//this.username = 'sp';
+this.username = 'godlysensation';
 }
 
 this.isInit = true;
@@ -115,7 +115,7 @@ let state;
     if(paths[2]=='register'){
       state = {component:'register',url:pathname,isInit:isInit}; 
     }else{
-      //this is for a tenant or its user to login from their site eg: app/sp/login 
+      //this is for a tenant or its user to login from their site eg: app/login 
     state = this.getLoginState(isInit);
     
     }
@@ -284,15 +284,11 @@ case 'user':
 case 'category':
 case 'post':
 if(!this.dasboard){
-  //let dashboardState = {component:'dashboard',username:state.username,isAdmin:true, url:`/app/${state.username}/dashboard/page/detail/0`};
-  let dashboardState = this.getState(`/app/${state.username}/dashboard/page/detail/0`,true);
+  let dashboardState = this.getState(this.getLink('dashboard'),false);
   this.dasboard = new Dashboard(this,dashboardState);
   }
 this.dasboard.mount(state);
 break; 
-case '404':
-this.nav404(state);
-break;
 }//switch
 //finally
 if(state.isPop){//??
@@ -351,8 +347,7 @@ switch (errorCode){
                 case 807://forbidden
                     break;
                 case 404://Guest
-                    this.navigate({component:'home',url:'page/404',isView:true,
-hasError:true,message:responseJson.message,responseJson:responseJson});
+                    this.navigate({component:'home',url:'page/404',isView:true,hasError:true,message:responseJson.message,responseJson:responseJson});
                     return;
                     case 804://Not Deleted
                     break;

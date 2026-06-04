@@ -83,7 +83,8 @@ this.main.log(responseJson,0,'FetchUtils.fetchExt(): responseJson');
 return responseJson;
 }catch(error){
 this.main.log(error,0,'FetchUtils.fetchExt(): fetch error');
-return false;
+this.main.utils.notify(this.errorMessage,2,'m');
+throw new Error();
 }// end fetch
 }//func
 

@@ -16,7 +16,7 @@ let $this = this;
 let state = this.main.utils.clone(this.main.state);
 let displayPosts;
 if(this.isView){
-state.link = this.main.fu.getApi(state.username,false,`/home/posts/${state.postType}/${data.v.cat}`,[{n:'limit',v:data.v.l}]);
+state.link = this.main.fu.getApi(`/home/posts/${state.postType}/${data.v.cat}`,[{n:'limit',v:data.v.l}]);
 displayPosts = await this.main.fu.fetch(state);
 }else{
 if(data.v.cat == -1){//ie all selected
@@ -28,7 +28,7 @@ displayPosts = displayPosts.slice(0, data.v.l);
 }
 
 
-let r =this.parent.pb.getBlockContainer({name:'recentPosts',main:'div',clasz:['d-flex','justify-content-center','flex-wrap','container'],withAlign:true,cmCallback:attachEvents});
+let r =this.parent.pb.getBlockContainer({name:'recentPosts',main:'div',clasz:['d-flex','justify-content-center','align-items-start','flex-wrap','container'],withAlign:true,cmCallback:attachEvents});
 r.el.removeAttribute('contenteditable');
 r.el.setAttribute('l',data.v.l);
 r.el.setAttribute('cat',data.v.cat);
@@ -49,19 +49,17 @@ r.el.setAttribute('wm',data.v.wm);
 
 if(displayPosts.length>0){
 for(let p of displayPosts){
-let url = this.main.getHomeLink(state.username,p.title,p.id);
+let url = this.main.getHomeLink(p.postType,'s',p.title,p.id);
 let card = 
 `
 <div class="card sp-card mb-2">
-  <img src="${(p.featuredImageUrl)?this.main.mh.getImageUrl(p.featuredImageUrl,'grid'):''}" class="card-img-top sp-image ${this.main.pbu.showIf(data.v.wi)}">
-  <div class="card-body">
-    <h5 class="card-title sp-h">${p.title}</h5>
-    <p class="card-text sp-excerpt ${this.main.pbu.showIf(data.v.we)}">${p.excerpt}</p>
-    <a href="${url}" class="btn btn-primary sp-detail">Learn More</a>
-  </div>
-  <div class="card-footer sp-card-footer d-none">
   
+  <div class="card-body text-center">
+  <a href="${url}"  class="card-title sp-route-link sp-detail"><img src="${(p.featuredImageUrl)?this.main.mh.getImageUrl(p.featuredImageUrl,'grid'):''}" class="card-img-top sp-image ${this.main.pbu.showIf(data.v.wi)}"/></a>
+    <h5 class="card-title"><a href="${url}" class="card-link sp-route-link sp-detail text-decoration-none">${p.title}</a></h5>
+    <a href="${url}" class="btn btn-primary sp-route-link sp-detail">Learn More</a>
   </div>
+ 
 </div>
 `;
 this.main.pbu.appendChild(r.el,card);
