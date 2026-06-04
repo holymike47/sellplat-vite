@@ -51,13 +51,14 @@ async getListTemplate(){
 await this.setDisplay();
 let $this = this;
     //get handles
+    //
 this.categorySection=this.main.pbu.createElement('main',['category-component']);
 this.categorySection.innerHTML =
 `
 <section>
 <div class="container">
 <header>
-<a type="button" href="/app/${this.state.username}/category/${this.state.postType}/new/-1" class="btn btn-primary new-category sp-admin sp-route-link">Add Category </a> 
+<a type="button" href="${this.main.getLink('category',this.state.postType,'new',-1)}" class="btn btn-primary new-category sp-admin sp-route-link">Add Category </a> 
 </header>
 
 <div class="d-flex justify-content-end">
@@ -150,7 +151,7 @@ let p = {
 id:c.id,
 href:`/${this.state.username}/category/${c.title}/${c.id}`,
 titles:[c.title,c.description,c.postType],
-editHref:`/app/${this.state.username}/category/${this.state.postType}/edit/${c.id}`,
+editHref:this.main.getLink('category',this.state.postType,'edit',c.id),
 deleteHref:``
 };
 posts.push(p);
@@ -191,6 +192,7 @@ parentId:this.main.utils.isNull(parentId)?null:parentId,
 };
 this.main.log(category,0,'Category.saveCategory(): Before submit');
 let state = this.main.utils.clone(this.state);
+state.link = this.main.fu.getApi(state.url);
 state.body = JSON.stringify(category);
 let r = await this.main.fu.fetch(state);
 if(r>0){

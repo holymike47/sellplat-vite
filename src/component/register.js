@@ -23,7 +23,8 @@ this.registerComponent.innerHTML =
     ${this.main.pbu.createFormControl({serialize:true,title:"First Name",clasz:['first-name','sp-validation-required']})}
     ${this.main.pbu.createFormControl({serialize:true,title:"Last Name",clasz:['last-name','sp-validation-required']})}
      ${this.main.pbu.createFormControl({serialize:true,title:"Email",type:'email',clasz:['email','sp-validation-required']})}
-    ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',withSubmit:true,clasz:['password','sp-validation-required']})}
+    ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',clasz:['password','sp-validation-required']})}
+    ${this.main.pbu.createFormControl({serialize:true,title:"Site",placeholder:'Site',withSubmit:true,clasz:['site','sp-validation-required']})}
     <p class="text-center small"><a href="/app/login">Already have an account? Log in</a></p>
    </section>
   </form>
@@ -36,6 +37,7 @@ this.firstNameControl = this.registerComponent.querySelector('input.first-name')
 this.lastNameControl = this.registerComponent.querySelector('input.last-name');
 this.emailControl = this.registerComponent.querySelector('input.email');
 this.passwordControl = this.registerComponent.querySelector('input.password');
+this.siteControl = this.registerComponent.querySelector('input.site');
 this.loginButton = this.registerComponent.querySelector('button.sp-button');
 //
 addEvents();
@@ -56,16 +58,18 @@ let firstName = this.firstNameControl.value;
 let lastName = this.lastNameControl.value;
 let email = this.emailControl.value;
 let password = this.passwordControl.value;
+let site = this.siteControl.value;
 let tenant = {
 firstName:firstName,
 lastName:lastName,
 email: email,
 password:password,
+username:site,
 clientUUID:this.main.utils.getUUID()
 };
 
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi('sp',false,'exists',[{n:'type',v:'token'}]);
+state.link = this.main.fu.getApi('exists',[{n:'type',v:'token'}]);
 state.body = JSON.stringify({email:email});
 //dont springify a single value like email else extra double quote will be added
 let r = await this.main.fu.fetch(state);
@@ -81,17 +85,18 @@ this.main.pbu.listen(authTokenTemplate.button,'click',async()=>{
       this.main.utils.notify('Wrong, please try again',2,'m');
     }else{
       //now register client
-state.link = this.main.fu.getApi(undefined,false,'register');
+state.link = this.main.fu.getApi('register');
 state.body = JSON.stringify(tenant);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.main.log(r,0,'Register.register(): Registeration success - tenant info');
 this.main.utils.setCache('user',r.user);
 this.main.utils.setCache('option',r.option);
-let username = r.user.username;
 this.formTitle.textContent = 'Thank you, please visit your dashboard';
 //display link of dashboard; 
-this.authForm.innerHTML = `<a href="/app/${username}/dashboard/page/detail/0" class="btn btn-primary w-100 py-2" >Dashboard</button>`;
+let href = 'https://' + site + '.' +this.main.siteDomain + this.main.getLink('dashboard');
+this.main.log(href,0,'Register.register()  new tenant dashboard link');
+this.authForm.innerHTML = `<a target="_blank" href="${href}" class="btn btn-primary w-100 py-2" >Dashboard</button>`;
 }
     }
 });

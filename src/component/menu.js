@@ -45,7 +45,7 @@ this.menuComponent.innerHTML =
 `
 <section>
 <header>
-    <a type="button" href="/app/${this.state.username}/menu/page/new/-1" class="btn btn-primary new-menu sp-admin sp-route-link">Add Menu </a> 
+    <a type="button" href="${this.main.getLink('menu','page','new',-1)}" class="btn btn-primary new-menu sp-admin sp-route-link">Add Menu </a> 
 </header>
 
 <section class="sp-table menu-list-table">
@@ -72,10 +72,10 @@ let posts = [];
 for(let m of this.displayMenus){
 let p = {
 id:m.id,
-href:`/app/${this.state.username}/menu/page/edit/${m.id}`,
+href:this.main.getLink('menu','page','edit',m.id),
 titles:[m.title,m.description],
-editHref:`/app/${this.state.username}/menu/page/edit/${m.id}`,
-deleteHref:`/app/${this.state.username}/menu/page/delete/${m.id}`,
+editHref:this.main.getLink('menu','page','edit',m.id),
+deleteHref:``,
 };
 posts.push(p);
 }//for

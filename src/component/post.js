@@ -90,7 +90,7 @@ this.main.pbu.appendChild(this.postFormSection,
 <section>
 <div class="container">
 <header class="my-2">
-<a type="button" href="/app/${this.state.username}/post/${this.state.postType}/new/-1" class="btn btn-primary new-post sp-admin sp-route-link">Add ${this.state.postType} </a> 
+<a type="button" href="${this.main.getLink('post',this.state.postType,'new',-1)}" class="btn btn-primary new-post sp-admin sp-route-link">Add ${this.state.postType} </a> 
 </header>
 
 <div class="filter filter-by-status w-25">
@@ -339,7 +339,7 @@ let i = {
 id:p.id,
 href:`/${this.state.username}/${p.title}/${p.id}`,
 titles:[p.title,(p.category?.title)?p.category.title:'None',(p.author)?p.author.firstName:'',p.postType,p.contentStatus],
-editHref:`/app/${this.state.username}/post/${this.state.postType}/edit/${p.id}`,
+editHref:this.main.getLink('post',this.state.postType,'edit',p.id),
 deleteHref:``
 };
 if(!isPost){

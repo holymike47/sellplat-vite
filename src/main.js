@@ -33,11 +33,15 @@ this.tu = new TemplateUtils(this);
 this.mh = new MediaHandler(this);
 this.oldImageIds = [];
 this.state = null;
-this.sitename = 'sentplat';
-this.host = 'sentplat.com';
+this.siteDomains = ['localhost:5173','localhost:4173','senplat.com','sp.senplat.com','sp2.senplat.com'];
+this.sitename = 'senplat';
+this.siteDomain = 'senplat.com';
+this.host = 'senplat.com';
+this.username = '';
 this.isSiteDomain = false;
 this.isSite = false;
 this.isSiteHome = false;
+this.isInit = false;
 this.init();
 //
 }//
@@ -58,12 +62,25 @@ let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
 this.host = window.location.host;
 this.log(this.host,0,'Main.init(): host');
-this.isSiteDomain = this.host=='localhost:5173' || this.host=='localhost:4173' || this.host=='sentplat.com';
-let username;
-if(this.isSiteDomain && (pathname=='' || pathname=='/')){
-  this.isSiteHome = this.isSite = true;
-  username = this.sitename;
+this.isSite = this.host == this.siteDomain;
+this.isSiteDomain = this.host.endsWith('senplat.com');
+if(this.isSiteDomain){
+  if(this.isSite){
+      //root
+      this.username = this.sitename;
+      this.isSiteHome = true;
+  }else{
+    this.username = this.host.split('.')[0];
+  }
+}else{
+    this.username = this.host;
 }
+
+if(this.isDev()){
+this.username = 'sp2';
+}
+
+this.isInit = true;
 //remove last string i.e '/'
 if(pathname.endsWith('/')){
 pathname = pathname.slice(0, -1);
@@ -72,50 +89,16 @@ pathname = pathname.slice(0, -1);
 if(pathname.startsWith('/app')){
 this.handleAdmin(pathname,true);
 }else{
-this.handleView(true,pathname,username);
-}
-
-}//func
-init2(){
-window.addEventListener('popstate', (e) => {
-    e.preventDefault();
-   if(e.state){
-    this.log(e.state,0,'Main.init(): popstate - evt.state');
-    e.state.isPop = true;
-    e.state.isInit = false;
-    this.navigate(e.state);
-   }
-});//
-
-let pathname = window.location.pathname;
-window.history.replaceState(null,'',pathname);
-this.host = window.location.host;
-this.isSiteDomain = this.host=='localhost:5173' || this.host=='localhost:4173' || this.host=='sentplat.com';
-let username;
-if(this.isSiteDomain && (pathname=='' || pathname=='/')){
-  this.isSiteHome = this.isSite = true;
-  username = this.sitename;
-}
-//remove last string i.e '/'
-if(pathname.endsWith('/')){
-pathname = pathname.slice(0, -1);
-}
-
-if(pathname.startsWith('/app')){
-this.handleAdmin(pathname,true);
-}else{
-this.handleView(true,pathname,username);
+this.handleView(pathname,true);
 }
 
 }//func
 /**
- * 
- * @param {boolean} isInit 
  * @param {string} pathname
- * @param {string|null} username 
+ * @param {boolean} isInit  
  */
-handleView(isInit,pathname,username=null,){
-this.navigate(this.getHomeState(isInit,pathname,username));
+handleView(pathname,isInit){
+this.navigate(this.getHomeState(pathname,isInit));
 }//func
 
 /**
@@ -126,31 +109,141 @@ this.navigate(this.getHomeState(isInit,pathname,username));
 handleAdmin(pathname,isInit){
 let paths = pathname.split('/');
 let length = paths.length;
-let state,username;
- if(length==4){
-  username = paths[2];
-    if(paths[3]=='register'){
-      state = {username:this.sitename,component:'register',url:'/app/register',isInit:isInit}; 
+let state;
+ if(length==3){
+  //eg: senplat.com/app/login 
+    if(paths[2]=='register'){
+      state = {component:'register',url:pathname,isInit:isInit}; 
     }else{
       //this is for a tenant or its user to login from their site eg: app/sp/login 
-    state = this.getLoginState(username,isInit);
+    state = this.getLoginState(isInit);
     
     }
 
-  }else if(length==7){
+  }else if(length==6){
     //note: admin link starts with app so lenght is 6 as opposed to normal view which is 5
     state = this.getState(pathname,isInit);
   }else{
     //not found or home or login
-    username=this.sitename
-    state = this.getLoginState(username,isInit);
-  }
-  if(state.username==this.sitename){
-    this.isSite = true;
+    state = this.getLoginState(isInit);
   }
   this.navigate(state);
 }//
 
+/**
+ * 
+ * @param {Event|string} input - Event or pathname
+ * @param {boolean} isInit
+ * @returns 
+ */
+getState(input,isInit=false){
+let pathname;
+if(input instanceof Event){
+let el = input.target;
+let url = new URL(el.href);
+pathname = url.pathname;
+}else{
+    pathname = input;
+}
+let paths = pathname.split('/');//check url segments
+//note: path[0] returns an empty string
+//note: path[1] = app
+let state =
+{
+username : this.username,
+component : paths[2],
+postType:paths[3],
+type : paths[4],
+id : Number(paths[5]),
+url: pathname,
+isInit:isInit,
+isAdmin:true,
+nextState:null
+};
+return state;
+}//func
+
+/**
+ * 
+ * @param {string} pathname 
+ * @param {boolean} isInit 
+ * @returns 
+ */
+getHomeState(pathname,isInit){
+let postType = 'page';
+let archiveType = 's';
+let title,id;
+if(pathname=='/' || pathname==''){
+title = 'home';
+id = 0;
+}else{
+let paths = pathname.split('/');
+let length = paths.length;
+if(length==5){//i.e localhost/page/s/about/4
+postType = paths[1];
+archiveType = paths[2];
+title = paths[3];
+id = paths[4];
+}else{
+  this.navigate({component:'home',url:`${this.username}/404`,isView:true,hasError:true});
+}
+}
+let homeState = {
+username:this.username,
+component:'home',
+type:'detail',
+postType:postType,
+archiveType:archiveType,
+isArchive:archiveType!='s',
+title:title,
+id:Number(id),
+isHome:id==0,
+isView:true,
+isInit:isInit,
+nextState:null,
+url:pathname,
+};
+this.log(homeState,0,'Main.homeState(): homeState');
+return homeState;
+}//func
+/**
+ * @param {string} postType
+ * @param {string} archiveType
+ * @param {string} title 
+ * @param {number|string} id 
+ * @returns 
+ */
+getHomeLink(postType,archiveType,title,id){
+return  `/${postType}/${archiveType}/${title}/${Number(id)}`;
+}//func
+
+/**
+ * 
+ * @param {string} component 
+ * @param {string} postType 
+ * @param {string} type 
+ * @param {number|string} id 
+ * @returns 
+ */
+getLink(component,postType='page',type='detail',id=0){
+return  `/app/${component}/${postType}/${type}/${Number(id)}`;
+}//func
+
+/**
+ * 
+ * @param {HTMLAnchorElement} link 
+ */
+makeLink(link){
+this.pbu.listen(link,'click',(e)=>{
+e.preventDefault();
+let pathname = link.pathname;
+if(pathname.startsWith('/app')){
+this.handleAdmin(pathname,false);
+}else{
+this.handleView(pathname,false);
+}
+})
+}
 /**
  * 
  * @param {Event|any} state 
@@ -164,7 +257,7 @@ this.home = this.home || new Home(this,state);
 this.home.state = state;
 //check if its a 404 page
 if(state.hasError){
-await this.home.get404Page(state.error);
+await this.home.get404Page(state.message,state.responseJson);
 return;
 }
 
@@ -202,30 +295,11 @@ this.nav404(state);
 break;
 }//switch
 //finally
-if(state.isPop || state.isInit){//??
+if(state.isPop){//??
 //do nothing
 }else{
 this.pushState(state);
 }
-}//func
-
-/**
- * 
- * @param {any|null} state 
- * @param {any|null} responseJson
- */
-nav404(state=null,responseJson = null){
-let message = state?.message || "You may have mistyped the address or the page may have been moved";
-let div= this.pbu.createElement('div');
-div.innerHTML=
-`
-<h3>404 Not Found</3>
-<h5>We couldn’t find the page you were looking for.</h5>
-<p>${message}</p>
-<a href="/" class="btn btn-primary">HOMEPAGE</>
-`;
-this.pbu.mount(div);
-this.log( state?.responseJson,0,'Main.nav404(): responseJson');
 }//func
 
 /**
@@ -277,8 +351,8 @@ switch (errorCode){
                 case 807://forbidden
                     break;
                 case 404://Guest
-                    this.navigate({component:'home',url:`${state.username}/404`,isView:true,
-                      hasError:true,message:responseJson.message,responseJson:responseJson});
+                    this.navigate({component:'home',url:'page/404',isView:true,
+hasError:true,message:responseJson.message,responseJson:responseJson});
                     return;
                     case 804://Not Deleted
                     break;
@@ -338,241 +412,15 @@ state.url = `/app/${state.username}/${state.component}/${state.postType}/edit/${
 window.history.replaceState(state,'',state.url);
 return state;
 }//func
-/**
- * 
- * @param {Event|string} input - Event or pathname
- * @param {boolean} isInit
- * @returns 
- */
-getState(input,isInit=false){
-let pathname;
-if(input instanceof Event){
-let el = input.target;
-let url = new URL(el.href);
-pathname = url.pathname;
-}else{
-    pathname = input;
-}
-let paths = pathname.split('/');//check url segments
-//note: path[0] returns an empty string
-//note: path[1] = app
-let state =
-{
-username : paths[2],
-component : paths[3],
-postType:paths[4],
-type : paths[5],
-id : Number(paths[6]),
-url: pathname,
-isInit:isInit,
-isAdmin:true,
-nextState:null
-};
-return state;
-}//func
+
 
 /**
  * 
- * @param {boolean} isInit
- * @param {string} pathname
- * @param {string} username
- */
-getHomeState(isInit,pathname,username){
-let title,id;
-let archiveType = 's';
-if(pathname=='/' || pathname==''){
-username = this.sitename;
-title = 'home';
-id = 0;
-}else{
-let paths = pathname.split('/');
-let length = paths.length;
-username = paths[1];
-if(length==2){//i.e localhost/sentplat
-title = 'home';
-id=0;
-}else if(paths.length==4){//i.e localhost/sentplat/about/4
-title = paths[2];
-id = paths[3];
-}else if(paths.length=5){//i.e localhost/sentplat/category/auto/4
-archiveType = paths[2];
-title = paths[3];
-id = paths[4];
-}
-else{
-  this.navigate({component:'home',url:`${username}/404`,isView:true,hasError:true});
-}
-}
-
-let isHome = id==0;
-let homeState = {
-username:username,
-host:this.host,
-component:'home',
-type:'detail',
-postType:'page',
-archiveType:archiveType,
-isArchive:archiveType!='s',
-title:title,
-id:Number(id),
-isHome:isHome,
-isView:true,
-isGuest:true,
-isInit:isInit,
-nextState:null,
-url:pathname,
-href:window.location.href
-};
-if(homeState.username==this.sitename){
-  this.isSite = true;
-}
-this.log(homeState,0,'Main.homeState(): homeState');
-return homeState;
-}//func
-
-/**
- * 
- * @param {boolean} isInit
- * @param {string} pathname
- * @param {string} username
- */
-getHomeState3(isInit,pathname,username){
-let title,id;
-let archiveType = 's';
-if(this.isSiteDomain){
-if(pathname=='/' || pathname==''){
-username = this.sitename;
-this.isSite = true;
-title = 'home';
-id = 0;
-}else{
-let paths = pathname.split('/');
-let length = paths.length;
-username = paths[1];
-if(username==this.sitename){
-  this.isSite = true;
-}
-if(length==2){//i.e localhost/sentplat
-title = 'home';
-id=0;
-}else if(paths.length==4){//i.e localhost/sentplat/about/4
-title = paths[2];
-id = paths[3];
-}else if(paths.length=5){//i.e localhost/sentplat/category/auto/4
-archiveType = paths[2];
-title = paths[3];
-id = paths[4];
-}
-else{
-  this.navigate({component:'home',url:`${state.username}/404`,isView:true,hasError:true,error:responseJson});
-}
-}
-
-}else{
-  //tenants have setup their domain or our site
-  //no concept of username
-username = (this.isSite)?this.sitename : 'sp';
-if(pathname=='/' || pathname==''){
-//i.e godlysensation.com
-title = 'home';
-id = 0;
-}else{
-let paths = pathname.split('/');
-let length = paths.length;
-//username = paths[1];
-if(length==2){//i.e godlysensation.com/about
-// not yet implemented
-}else if(paths.length==3){//i.e godlysensation.com/about/4
-title = paths[1];
-id = paths[2];
-}else if(paths.length=4){//i.e godlysensation.com/category/auto/4
-archiveType = paths[1];
-title = paths[2];
-id = Number(paths[3]);
-}
-else{
-  alert('handleView :not found');
-}
-}
-}
-let isHome = id==0;
-let homeState = {
-username:username,
-host:this.host,
-component:'home',
-type:'detail',
-postType:'page',
-archiveType:archiveType,
-isArchive:archiveType!='s',
-title:title,
-id:Number(id),
-isHome:isHome,
-isView:true,
-isGuest:true,
-isInit:isInit,
-nextState:null,
-url:pathname,
-href:window.location.href
-};
-this.log(homeState,0,'Main.homeState(): homeState');
-return homeState;
-}//func
-
-/**
- * 
- * @param {string} username 
- * @param {string} title 
- * @param {number|string} id 
- * @returns 
- */
-getHomeLink(username, title,id){
-return  `/${username}/${title}/${Number(id)}`;
-}//func
-
-/**
- * 
- * @param {string} username 
- * @param {string} title 
- * @param {number} id 
- */
-getHomeState2(username,title,id=0,archiveType='s'){
-let isHome = id==0;
-let homeState = {
-username:username,
-component:'home',
-type:'detail',
-postType:'page',
-archiveType:archiveType,
-isArchive:archiveType!='s',
-title:title,
-id:Number(id),
-isHome:isHome,
-isView:true,
-isGuest:true,
-isInit:false,
-nextState:null,
-url:'',
-href:''
-};
-if(isHome){
-  homeState.url = `/${username}`;
-}else if(archiveType=='s'){
-  homeState.url = `/${username}/${title}/${id}`;
-}else {
-  homeState.url = `/${username}/${archiveType}/${title}/${id}`;
-}
-homeState.href = this.config.HOSTNAME + homeState.url;
-return homeState;
-}//func
-
-/**
- * 
- * @param {*} username 
  * @param {*} isInit 
  * @returns 
  */
-getLoginState(username,isInit,nextState=null){
-let loginState = {component:'login',username:username,url:`/app/${username}/login`,isInit:isInit,nextState:nextState};
+getLoginState(isInit,nextState=null){
+let loginState = {component:'login',url:'/app/login',isInit:isInit,nextState:nextState};
 return loginState
 }//func
 
@@ -647,6 +495,29 @@ return;
         }
 
         
+}//func
+
+isDev(){
+return import.meta.env.MODE=='development';
+}//func
+
+/**
+ * 
+ * @param {HTMLElement} component 
+ */
+addRouteEvents(component){
+let links = component.querySelectorAll('a.sp-route-link');
+for(let link of links){
+  this.pbu.listen(link,'click',(e)=>{
+    e.preventDefault();
+    let isInit = link.classList.contains('sp-slug-link');
+    if(link.classList.contains('sp-admin')){
+      this.handleAdmin(link.pathname,isInit);
+    }else if(link.classList.contains('sp-detail')){
+    this.handleView(link.pathname,isInit);
+    }
+  });
+}
 }//func
 
 }//class

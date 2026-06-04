@@ -93,12 +93,12 @@ logoUrl:logoImageId,
 iconUrl:iconImageId,
 };
 this.main.log(option,0,'Option.saveOption(): Before submit');
-let state = this.state;
+let state = this.main.utils.clone(this.state);
+state.link = this.main.fu.getApi(state.url);
 state.body = JSON.stringify(option);
 let r = await this.main.fu.fetch(state);
 if(r && r==this.option$.id){
-this.option$ = this.parent.option =  option;
-//this.main.utils.setCache('option',this.option$);
+this.main.utils.setCache('option',this.option$);
 this.main.setTheme(this.option$);
 this.main.utils.notify("Saved",0,'m');
 this.main.mh.deleteFromServer(null);

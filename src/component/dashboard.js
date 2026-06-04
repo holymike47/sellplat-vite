@@ -108,18 +108,20 @@ this.signoutLink = this.dashboardComponent.querySelector('a#signout');
 this.adminMenu = this.dashboardComponent.querySelector('ul.sp-admin-menu'); 
 this.componentTitle = this.dashboardComponent.querySelector('span.sp-component-title');
 
+//getLink(component,postType='page',type='detail',id=0)
+this.main.getLink('menu','page','list',0);
 let adminMenuItems = [
-{name:'Dashboard',url:`/app/${this.state.username}/dashboard/page/detail/0`,icon:'bi-menu-button'},
-{name:'Settings',url:`/app/${this.state.username}/option/page/detail/0`,icon:'bi-menu-button',isTenant:true},
-{name:'Menu',url:`/app/${this.state.username}/menu/page/list/0`,icon:'bi-menu-button',isTenant:true},
-{name:'Users',url:`/app/${this.state.username}/user/page/list/0`,icon:'bi-person',isTenant:true},
-{name:'Pages',url:`/app/${this.state.username}/post/page/list/0`,icon:'bi-person',isTenant:true},
+{name:'Dashboard',url:this.main.getLink('dashboard'),icon:'bi-menu-button'},
+{name:'Settings',url:this.main.getLink('option'),icon:'bi-menu-button',isTenant:true},
+{name:'Menu',url:this.main.getLink('menu','page','list',0),icon:'bi-menu-button',isTenant:true},
+{name:'Users',url:this.main.getLink('user','page','list',0),icon:'bi-person',isTenant:true},
+{name:'Pages',url:this.main.getLink('post','page','list',0),icon:'bi-person',isTenant:true},
 
 {name:'Posts',url:'#',icon:'bi-person',children:
-[{name:'All Posts',url:`/app/${this.state.username}/post/post/list/0`,icon:'bi-person'},{name:'Categories',url:`/app/${this.state.username}/category/post/list/0`,icon:'bi-person'}]},
+[{name:'All Posts',url:this.main.getLink('post','post','list',0),icon:'bi-person'},{name:'Categories',url:this.main.getLink('category','post','list',0),icon:'bi-person'}]},
 
 {name:'Products',url:'#',icon:'bi-person',children:
-[{name:'All Products',url:`/app/${this.state.username}/post/product/list/0`,icon:'bi-person'},{name:'Categories',url:`/app/${this.state.username}/category/product/list/0`,icon:'bi-person'}]},
+[{name:'All Products',url:this.main.getLink('post','product','list',0),icon:'bi-person'},{name:'Categories',url:this.main.getLink('category','product','list',0),icon:'bi-person'}]},
 
 ];
 
@@ -146,10 +148,11 @@ li.innerHTML = `<a type="button"  class="px-0 nav-link dropdown-toggle" href="#"
 addEvents();
 //finally
 function addEvents(){
+$this.main.addRouteEvents($this.dashboardComponent); 
 $this.main.pbu.listen($this.signoutLink,'click',async(e)=>{
 e.preventDefault();
 let state = $this.main.utils.clone($this.state);
-state.link = $this.main.fu.getApi($this.state.username,true,'logout');
+state.link = $this.main.fu.getApi('/app/logout');
 state.method = 'POST';
 let r = await $this.main.fu.fetch(state);
 if(r==true){
@@ -158,8 +161,6 @@ $this.main.navigate($this.main.getLoginState($this.state.username,false));
 window.location.reload();
 }
 });
-
-$this.addRouteEvents($this.dashboardComponent);
 }//inner
 }//func
 
@@ -168,19 +169,7 @@ $this.addRouteEvents($this.dashboardComponent);
  * @param {HTMLElement} component 
  */
 addRouteEvents(component){
-let links = component.querySelectorAll('.sp-route-link');
-for(let link of links){
-  this.main.pbu.listen(link,'click',(e)=>{
-    e.preventDefault();
-    let state;
-    if(link.classList.contains('sp-admin')){
-      state = this.main.getState(e,true);
-      this.main.navigate(state);
-    }else if(link.classList.contains('sp-detail')){
-    this.main.handleView(link.pathname,false);
-    }
-  });
-}
+this.main.addRouteEvents(component);
 //MASS ACTION
 this.tb = this.main.pbu.query('tbody.mass-action');
 if(this.tb){
@@ -258,7 +247,10 @@ this.child.parent = this;
  */
 
 async process(state){
-state.stateObject = state.stateObject || await this.main.fu.fetch(state);
+if(! state.stateObject){
+state.link = this.main.fu.getApi(state.url);
+state.stateObject = await this.main.fu.fetch(state);
+}
 this.main.log(state.stateObject,0,`${this.state.component}.process(): stateObject`);
   switch(state.component){
     case 'option':
@@ -332,6 +324,7 @@ let modal = this.main.utils.setModal('Confirm Deletion','blanc');
 this.main.pbu.listen(modal.confirm,'click',async ()=>{
 ///
 let state = this.main.utils.clone(this.child.state);
+state.link = this.main.fu.getApi(state.url);
 state.body = JSON.stringify(ids);
 state.method = "DELETE";
 let r = await this.main.fu.fetch(state);

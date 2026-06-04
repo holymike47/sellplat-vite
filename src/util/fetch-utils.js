@@ -27,15 +27,13 @@ headers.append("sp-nsu", state.nextState?`/api${state.nextState.url}`:"");
 let option = {headers:headers,method:state.method};
 //let option = {headers:headers,method:state.method,credentials: 'include'};
 if(state.isAdmin || state.component=='login' || state.component=='register'){
-this.errorMessage = (state.errorMessage)?state.errorMessage: `Error processing ${state.component}`;//???
 option.credentials = 'include';
 }
 if(state.body){
     option.body = state.body;
 }
 //now
-let url = (state.link)? state.link: this.getApi(state.username,'dashboard',state.url,null);
-let request = new Request(url,option);
+let request = new Request(state.link,option);
 let response;
 let responseJson;
 try{
@@ -92,13 +90,40 @@ return false;
 //########## GENERAL ##########
 /**
  * 
- * @param {string} username 
- * @param {boolean|string} admin 
  * @param {string|null} path; 
  * @param {string[]|null} searchParams; 
  * @returns 
  */
-getApi(username,admin,path,searchParams){
+getApi(path,searchParams){
+let apiBase;
+if(this.main.isDev()){
+apiBase = 'http://localhost:8081/api';
+}else{
+apiBase = 'https://sellplat.codecapt.com/api';
+}
+//prefix path with username
+let url = apiBase + `/${this.main.username}` ;
+if(path){
+    if(path.startsWith('/')){
+        url = url + path;
+    }else{
+        url = url + `/${path}`;
+    }
+    
+}
+if(searchParams){
+let params = new URLSearchParams();
+for(let p of searchParams){
+params.append(p.n, p.v);
+}
+url = url + `?${params}`;
+}
+this.main.log(url,0,'FetchUtils.getApi(): fetch link');
+return url;
+}//
+
+
+getApi2(username,admin,path,searchParams){
 //let apiBase = this.main.config.BASE_URL;
 let host = window.location.host;
 this.main.log(host,0,'FetchUtils.getApi(): host');

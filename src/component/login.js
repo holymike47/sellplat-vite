@@ -26,7 +26,7 @@ this.loginComponent.innerHTML =
     ${this.main.pbu.createFormControl({serialize:true,title:"Email",type:'email',clasz:['email','sp-validation-required']})}
     ${this.main.pbu.createFormControl({serialize:true,title:"Password",type:'password',withSubmit:true,clasz:['password','sp-validation-required']})}
     <p class="float-end"><a class="sp-forgot-password" type="button">Forgot password?</a></p>
-    <p class="text-center small"><a href="/app/register">Don't have an account? Sign up</a></p>
+    <p class="text-center small ${this.main.pbu.showIf(this.main.isSite)}"><a href="/app/register">Don't have an account? Sign up</a></p>
    </section>
   </form>
 `;
@@ -67,7 +67,7 @@ password:password,
 clientUUID:this.main.utils.getUUID()
 };
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(this.state.username,false,`login`);
+state.link = this.main.fu.getApi('app/login');
 state.body = JSON.stringify(user);
 let r = await this.main.fu.fetch(state);
 if(r){
@@ -86,21 +86,11 @@ this.main.pbu.listen(authTokenTemplate.button,'click',()=>{
       this.state.nextState.stateObject= tempData.stateObject;
      this.main.navigate(this.state.nextState);
     }else{
-    let username = tempData.user.username;
     this.main.setTheme(tempData.option);
     this.main.utils.setCache('user',tempData.user);
     this.main.utils.setCache('option',tempData.option);  
-            // let dashboardState = {
-            //     component:'dashboard',
-            //     username:username,
-            //     url:`/app/${username}/dashboard/page/detail/0`,
-            //     isAdmin:true,
-            //     user:tempData.user,
-            //     option:tempData.option
-            //     };
-            let dashboardState = this.main.getState(`/app/${username}/dashboard/page/detail/0`,true);
-            this.main.navigate(dashboardState);
-                  }
+            this.main.handleAdmin(this.main.getLink('dashboard'));
+            }
   }
 
 });
@@ -125,7 +115,7 @@ if(! this.main.vu.validate(emailControl)){return;}
 email = emailControl.value;
 let state = this.main.utils.clone(this.state);
 state.body = JSON.stringify({email:email});
-state.link  = this.main.fu.getApi(state.username,false,'resettoken',[{n:'type',v:'token'}]);
+state.link  = this.main.fu.getApi('app/resettoken',[{n:'type',v:'token'}]);
 let r = await this.main.fu.fetch(state);
 if(r){
   let authToken = r;
@@ -156,7 +146,7 @@ this.main.pbu.listen(authTokenTemplate.button,'click',()=>{
         }
         password = passwordControl.value;
         //now submit password for reset
-        state.link = this.main.fu.getApi(state.username,false,'resettoken',[{n:'type',v:'update'}]);
+        state.link = this.main.fu.getApi('app/resettoken',[{n:'type',v:'update'}]);
         state.body = state.body = JSON.stringify({email:email,password:password,token:authToken});
         let r = await this.main.fu.fetch(state);
         if(r=='ok'){

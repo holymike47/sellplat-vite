@@ -37,7 +37,7 @@ this.userComponent.innerHTML =
 `
 <section>
 <header>
-   <a type="button" href="/app/${this.state.username}/user/page/new/-1" class="btn btn-primary new-user sp-admin sp-route-link">Add User </a> 
+   <a type="button" href="${this.main.getLink('user','page','new',-1)}" class="btn btn-primary new-user sp-admin sp-route-link">Add User </a> 
    </header>
    <section class="sp-table user-list-table"> </section>
    
@@ -113,10 +113,10 @@ let posts = [];
 for(let u of this.displayUsers){
 let p = {
 id:u.id,
-href:`/${this.state.username}/user/page/category/${u.name}/${u.id}`,
+href:this.main.getLink('user','page','edit',u.id),
 titles:[u.firstName,u.lastName,u.email,u.topRole],
-editHref:`/app/${this.state.username}/user/page/edit/${u.id}`,
-deleteHref:`/app/${this.state.username}/user/page/delete/${u.id}`
+editHref:this.main.getLink('user','page','edit',u.id),
+deleteHref:``
 };
 posts.push(p);
 }//for
