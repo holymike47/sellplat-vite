@@ -136,7 +136,8 @@ apiBase = this.main.config.BASE_URL;
 apiBase = 'https://sellplat.codecapt.com/api';
 }
 //for now
-apiBase = 'https://sellplat.codecapt.com/api';
+//apiBase = 'https://sellplat.codecapt.com/api';
+apiBase = 'https://sp-backend-u8al7.ondigitalocean.app/api';
 let url = apiBase + '/app';
 if(admin){
 if(admin=='dashboard'){
