@@ -66,7 +66,7 @@ this.isSite = this.host == this.siteDomain;
 this.isSiteDomain = this.host.endsWith('senplat.com');
 if(this.isSiteDomain){
   if(this.isSite){
-      //root
+      //root or =
       this.username = this.sitename;
   }else{
     this.username = this.host.split('.')[0];
