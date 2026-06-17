@@ -102,6 +102,7 @@ apiBase = 'http://localhost:8081/api';
 }else{
 apiBase = 'https://sellplat.codecapt.com/api';
 }
+apiBase = 'https://sp-backend-u8al7.ondigitalocean.app/api';
 //prefix path with username
 let url = apiBase + `/${this.main.username}` ;
 if(path){
@@ -112,57 +113,6 @@ if(path){
     }
     
 }
-if(searchParams){
-let params = new URLSearchParams();
-for(let p of searchParams){
-params.append(p.n, p.v);
-}
-url = url + `?${params}`;
-}
-this.main.log(url,0,'FetchUtils.getApi(): fetch link');
-return url;
-}//
-
-
-getApi2(username,admin,path,searchParams){
-//let apiBase = this.main.config.BASE_URL;
-let host = window.location.host;
-this.main.log(host,0,'FetchUtils.getApi(): host');
-let apiBase;
-if(host=='localhost:5173'){
-apiBase = this.main.config.BASE_URL;
-}else{
-//apiBase = 'https://' + host + '/api';
-apiBase = 'https://sellplat.codecapt.com/api';
-}
-//for now
-//apiBase = 'https://sellplat.codecapt.com/api';
-apiBase = 'https://sp-backend-u8al7.ondigitalocean.app/api';
-let url = apiBase + '/app';
-if(admin){
-if(admin=='dashboard'){
-return apiBase + path;
-}else{
-    url = url + `/${username}/admin`;
-}
-}
-
-else{
-    //not admin
-    if(username){
-        url = url + `/${username}`;
-    }
-}
-
-if(path){
-    if(path.startsWith('/')){
-        url = url + path;
-    }else{
-        url = url + `/${path}`;
-    }
-    
-}
-
 if(searchParams){
 let params = new URLSearchParams();
 for(let p of searchParams){
