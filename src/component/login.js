@@ -1,6 +1,5 @@
-import { th } from "intl-tel-input/i18n";
-
 // @ts-check
+import { th } from "intl-tel-input/i18n";
 export class Login{
 /**
  * 

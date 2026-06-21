@@ -100,9 +100,8 @@ let apiBase;
 if(this.main.isDev()){
 apiBase = 'http://localhost:8081/api';
 }else{
-apiBase = 'https://sellplat.codecapt.com/api';
-}
 apiBase = 'https://sp-backend-u8al7.ondigitalocean.app/api';
+}
 //prefix path with username
 let url = apiBase + `/${this.main.username}` ;
 if(path){
