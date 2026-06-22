@@ -61,6 +61,7 @@ window.addEventListener('popstate', (e) => {
 let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
 this.host = window.location.host;
+//this.host='godlysensation.senplat.com';
 this.log(this.host,0,'Main.init(): host');
 this.isSite = this.host == this.siteDomain;
 this.isSiteDomain = this.host.endsWith('senplat.com');
@@ -75,9 +76,9 @@ if(this.isSiteDomain){
     this.username = this.host;
 }
 
-if(this.isDev()){
-this.username = 'sp';
-}
+// if(this.isDev()){
+// this.username = 'sp';
+// }
 
 this.isInit = true;
 //remove last string i.e '/'
