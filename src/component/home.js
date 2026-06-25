@@ -43,6 +43,10 @@ this.main.pbu.appendChild(this.homeComponent,
 <div class="post-meta ${this.main.pbu.showIf(p.category)}">
 <a href="${this.main.getHomeLink('post','c',p.category?.title,p.category?.id)}" class="btn btn-sm mx-1">${p.category?.title}</a>
 </div>
+
+<div class="excerpt">
+<p class="small">${p.excerpt}</p>
+</div>
   
 <div class="main-content">
 </div>
@@ -108,7 +112,7 @@ $this.main.pbu.replace($this.subscribeDiv,p);
 
 async getClientHome(){
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(`/${state.postType}/${state.archiveType}/${state.title}/${state.id}`);
+state.link = this.main.fu.getApi(state.url);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
@@ -130,7 +134,8 @@ this.post$ = this.postViewDto.posts[0];
 this.state.id = this.post$.id;
 }else{
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(state.url,[{n:'limit',v:1}]);
+state.link = this.main.fu.getApi(state.url);
+//state.link = this.main.fu.getApi(state.url,[{n:'limit',v:1}]);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
@@ -166,14 +171,14 @@ this.posts$ = this.postViewDto.posts;
 //simulate category as a post to enable use of detailTemplate
 this.post$ = {
 title:category.title,
+excerpt:category.description,
 featuredImageUrl:category.featuredImageUrl,
 sidebarType:"NONE"
 };
 let postDetail = await this.getTemplate();
 let mainContentDiv = postDetail.querySelector('div.main-content');
 let recentPostsWidget = await this.widget.getRecentPostsWidget({v:{items:this.posts$,we:true,wi:true,wm:false}});
-let description = `<p>${category.description}</p>`;
-this.main.pbu.appendChild(mainContentDiv,description,recentPostsWidget.querySelector('[m]'));
+this.main.pbu.appendChild(mainContentDiv,recentPostsWidget.querySelector('[p]'));//recentPosts-parent
 this.main.pbu.mount(postDetail);
 this.addViewEvents();
 }//func
@@ -245,7 +250,7 @@ for(let m of menuItems){
       if(isCustom){
         url = m.link;
       }else{
-        url = this.main.getHomeLink(m.postType,'s',m.title,m.postId);
+        url = this.main.getHomeLink(m.component,m.postType,m.archiveType,m.title,m.postId);
       }
         if(children.length==0){
         navItem = this.main.pbu.createElement('li',['nav-item']);
@@ -265,7 +270,7 @@ for(let m of menuItems){
         if(isCustom){
         url = c.link;
       }else{
-        url = this.main.getHomeLink(c.postType,'s',c.title,c.postId);
+        url = this.main.getHomeLink(c.component,c.postType,c.archiveType,c.title,c.postId);
       }
         navItem = this.main.pbu.createElement('li',['nav-item']);
         subMenuUl.appendChild(navItem);

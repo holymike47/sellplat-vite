@@ -208,9 +208,9 @@ if(data.withSubmit){
 }
 
 if(data.serialize){
-return row.outerHTML;
+return (data.inputOnly)?input.outerHTML: row.outerHTML;
  }else{
-return row;
+return (data.inputOnly)?input:row;
  }
 
 }//

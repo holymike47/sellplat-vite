@@ -269,12 +269,12 @@ break;
 //widgets :sp-widget
 case 'recentPosts':
 bc = await $this.parent.widget.getRecentPostsWidget(data);
-if(n==1){
-    let cards = bc.querySelectorAll('.sp-card');
-    for(let card of cards){
-        $this.main.pbu.addClass(card,['col-md-4']);
-    }
-}
+// if(n==1){
+//     let cards = bc.querySelectorAll('.sp-card');
+//     for(let card of cards){
+//         $this.main.pbu.addClass(card,['col-md-4']);
+//     }
+// }
     break;  
 default:
     $this.main.log('no case match',2,'PageBuilder.initilizePageBuilder.setMainElement()');
@@ -1537,7 +1537,7 @@ controls.appendChild(this.getFormControl());
 let div2 = 
 `
 <div class="sp-form-control ${this.blockMargin}">
-<label for="sp-form-message" class="sp-form-title">Message</label>
+<label for="sp-form-message" class="sp-form-message">Message</label>
 <textarea id="sp-form-message" rows="3" class="sp-form-control form-control sp-form-message sp-validation-required"></textarea>
 </div>
 
@@ -1604,6 +1604,7 @@ attachEvents();
 
 return row;
 async function attachEvents(){
+let title = row.querySelector('label.sp-form-title');
 let control = row.querySelector('input.sp-form-control');
 let typeSelector = row.querySelector('select.sp-select');
 let requiredValidationInput = row.querySelector('input.sp-checkbox');
@@ -1619,6 +1620,7 @@ $this.main.pbu.listen(requiredValidationInput,'click',()=>{
 //
 $this.main.pbu.listen(typeSelector,'change',()=>{
     control.type = typeSelector.value;
+    title.setAttribute('data-type',typeSelector.value);
 });
 //
 $this.main.pbu.listen(remove,'click',()=>{

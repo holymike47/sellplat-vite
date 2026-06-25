@@ -96,25 +96,18 @@ ${this.main.pbu.createFormControl({title:"Description",value:this.menu$.descript
       <h5>Build Section</h5>
       <div class="row menu-row">
         <div class="col-2">
-<select class="form-select menu-post-type">
-  <option value="page" selected>Pages</option>
-  <option value="post">Posts</option>
-  <option value="post category">Post Categories</option>
-  <option value="product category">Product Categories</option>
-  <option value="custom">Custom</option>
-</select>
+ ${this.main.pbu.createSelectElement({serialize:true,value:'Pages',clasz:['menu-item-type'],items:['Pages','Posts','Post Categories','Product Categories','Custom']})} 
         </div>
         <div class="col-6">
-          <div class="sp-form-control">
-          <input class="form-control menu-search sp-validation-required" placeholder="Search">
-        <input class="form-control menu-custom-link sp-validation-required d-none" placeholder="Link">
-          </div>
-          <div class="position-relative">
+        ${this.main.pbu.createFormControl({placeholder:'Search',clasz:['menu-search'],serialize:true})}
+        <div class="position-relative">
           <ul class="list-group mt-2 menu-selected d-none position-absolute" style="z-index: 101;">
           </ul>
           </div>
         </div>
-        <div class="col-2 sp-form-control"><input class="form-control menu-label sp-validation-required" placeholder="Label"></div>
+        <div class="col-2 sp-form-control">
+        ${this.main.pbu.createFormControl({placeholder:'Label',clasz:['menu-label','sp-validation-required'],serialize:true})}
+        </div>
         <div class="col-2"><button class="menu-add">Add</button></div>
       </div>
     </div>
@@ -135,9 +128,9 @@ ${this.main.pbu.createFormControl({title:"Description",value:this.menu$.descript
 //edit section
 this.menuTitleControl = this.menuComponent.querySelector('input.title');
 this.menuDescriptionControl = this.menuComponent.querySelector('input.description');
-this.menuPostTypeSelector = this.menuComponent.querySelector('.menu-post-type');
+this.menuItemTypeSelector = this.menuComponent.querySelector('.menu-item-type');
 this.menuSearchControl = this.menuComponent.querySelector('.menu-search');
-this.menuCustomLinkControl = this.menuComponent.querySelector('.menu-custom-link');
+//this.menuCustomLinkControl = this.menuComponent.querySelector('.menu-custom-link');
 this.menuSelectedList = this.menuComponent.querySelector('.menu-selected');
 this.menuLabelControl = this.menuComponent.querySelector('.menu-label');
 //to add selected menu
@@ -179,13 +172,11 @@ $this.maxId =  Math.max(...maxIds);
 }
 
 function addEvents(){
-  $this.main.pbu.listen($this.menuPostTypeSelector,'change',()=>{
-    if($this.menuPostTypeSelector.value=='custom'){
-      $this.main.pbu.show($this.menuCustomLinkControl);
-      $this.main.pbu.hide($this.menuSearchControl);
+  $this.main.pbu.listen($this.menuItemTypeSelector,'change',()=>{
+    if($this.menuItemTypeSelector.value=='Custom'){
+      $this.menuSearchControl.placeholder = 'Link';
     }else{
-      $this.main.pbu.show($this.menuSearchControl);
-      $this.main.pbu.hide($this.menuCustomLinkControl);
+      $this.menuSearchControl.placeholder = 'Search';
     }
   });
   
@@ -195,16 +186,29 @@ function addEvents(){
     let searchTerm = $this.menuSearchControl.value;
     if(searchTerm){
     let regex = new RegExp(`^${searchTerm}`, "i");
-    let postType = $this.menuPostTypeSelector.value;
+    let itemType = $this.menuItemTypeSelector.value;
+    let archiveType;
     let items;
-    switch(postType){
-      case 'page':
-      case 'post':
-        items = $this.state.stateObject.posts.filter(p=>p.postType==postType);
+    let component;
+    switch(itemType){
+      case 'Pages':
+        component = 'post';
+        archiveType = 's';
+        items = $this.state.stateObject.posts.filter(p=>p.postType=='page');
         break;
-      case 'post category':
+      case 'Posts':
+        component = 'post';
+        archiveType = 's';
+        items = $this.state.stateObject.posts.filter(p=>p.postType=='post');
+        break;
+      case 'Post Categories':
+        component = 'category';
+        archiveType = 'postcategory';
         items = $this.state.stateObject.categories.filter(c=>c.postType=='post');
-      case 'product category':
+        break;
+      case 'Product Categories':
+        component = 'category';
+        archiveType = 'productcategory';
         items = $this.state.stateObject.categories.filter(c=>c.postType=='product');
         break;
     }
@@ -222,10 +226,12 @@ function addEvents(){
         $this.main.pbu.listen(li,'click',()=>{
           $this.selectedMenu = {
                             menuId:++$this.maxId,
-                            postId:i.id,
+                            component:component,
+                            postType:i.postType,
+                            archiveType:archiveType,
                             title:i.title,
+                            postId:i.id,
                             slug:i.slug,
-                            postType:postType,
                             parentId:0,
                             children:[]
                             };
@@ -241,7 +247,7 @@ $this.main.log($this.selectedMenu,0,'Menu.getFormTemplate.addEvents(): selectedM
   });
   //
 $this.main.pbu.listen($this.menuAddButton,'click',()=>{
-let postType = $this.menuPostTypeSelector.value;
+let postType = $this.menuItemTypeSelector.value;
 let isCustom = postType=='custom';
 let menuControl;
 if(isCustom){

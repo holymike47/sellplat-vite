@@ -60,8 +60,8 @@ window.addEventListener('popstate', (e) => {
 
 let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
-this.host = window.location.host;
-//this.host='godlysensation.com';
+this.host = window.location.host.toLowerCase();
+this.host='godlysensation.com';
 this.log(this.host,0,'Main.init(): host');
 this.isSite = this.host == this.siteDomain;
 this.isSiteDomain = this.host.endsWith('senplat.com');
@@ -171,6 +171,7 @@ return state;
  * @returns 
  */
 getHomeState(pathname,isInit){
+let component ='post';
 let postType = 'page';
 let archiveType = 's';
 let title,id;
@@ -180,18 +181,19 @@ id = 0;
 }else{
 let paths = pathname.split('/');
 let length = paths.length;
-if(length==5){//i.e localhost/page/s/about/4
-postType = paths[1];
-archiveType = paths[2];
-title = paths[3];
-id = paths[4];
+if(length==6){//i.e localhost/post/page/s/about/4
+component = paths[1];
+postType = paths[2];
+archiveType = paths[3];
+title = paths[4];
+id = paths[5];
 }else{
-  this.navigate({component:'home',url:`${this.username}/404`,isView:true,hasError:true});
+  this.navigate({component:component,url:`${this.username}/404`,isView:true,hasError:true});
 }
 }
 let homeState = {
 username:this.username,
-component:'home',
+component:component,
 type:'detail',
 postType:postType,
 archiveType:archiveType,
@@ -208,24 +210,22 @@ this.log(homeState,0,'Main.homeState(): homeState');
 return homeState;
 }//func
 /**
+ * @param {string} component
  * @param {string} postType
  * @param {string} archiveType
  * @param {string} title 
  * @param {number|string} id 
  * @returns 
  */
-getHomeLink(postType,archiveType,title,id){
+getHomeLink(component,postType,archiveType,title,id){
 let url;
 let isHome = title?.toLowerCase()=='home';
-// let isBlog = title?.toLowerCase()=='blog';
-//temp solution
-if(!archiveType){archiveType='s';}
 if(isHome){
 url = '/';
 }else{
-  url = `/${postType}/${archiveType}/${title}/${Number(id)}`;
+  url = `/${component}/${postType}/${archiveType}/${title}/${Number(id)}`;
 }  
-return url;
+return url.toLowerCase();
 }//func
 
 /**
@@ -263,7 +263,21 @@ async navigate(state){
 this.state = state;
 let component = state.component;
 switch(component){
-case 'home':
+case 'login':
+new Login(this,state);
+break;
+case 'register':
+new Register(this,state);
+break;
+case 'dashboard':
+this.dasboard = new Dashboard(this,state);
+break;
+case 'option':
+case 'menu':
+case 'user':
+case 'category':
+case 'post':
+if(state.isView){
 this.home = this.home || new Home(this,state);
 this.home.state = state;
 //check if its a 404 page
@@ -279,26 +293,13 @@ this.home.getArchive();
 }else{
 this.home.getPost();
 }
-break;
-case 'login':
-new Login(this,state);
-break;
-case 'register':
-new Register(this,state);
-break;
-case 'dashboard':
-this.dasboard = new Dashboard(this,state);
-break;
-case 'option':
-case 'menu':
-case 'user':
-case 'category':
-case 'post':
+}else{
 if(!this.dasboard){
   let dashboardState = this.getState(this.getLink('dashboard'),false);
   this.dasboard = new Dashboard(this,dashboardState);
   }
 this.dasboard.mount(state);
+}
 break; 
 }//switch
 //finally
