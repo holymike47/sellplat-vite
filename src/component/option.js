@@ -60,10 +60,10 @@ this.logoImageTemplate = this.main.mh.getImageTemplate({src:$this.main.mh.getIma
 this.logoImageTemplate.insertIcon.remove();
 this.main.pbu.replace(this.logoImageDiv,this.logoImageTemplate.div);
 //icon
-this.iconImageDiv = this.optionSection.querySelector('#iconImageDiv');
-this.iconImageTemplate = this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(o.iconUrl,'grid'),width:"300", height:"300",divClasz:['w-50']});
-this.iconImageTemplate.insertIcon.remove();
-this.main.pbu.replace(this.iconImageDiv,this.iconImageTemplate.div);
+// this.iconImageDiv = this.optionSection.querySelector('#iconImageDiv');
+// this.iconImageTemplate = this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(o.iconUrl,'grid'),width:"300", height:"300",divClasz:['w-50']});
+// this.iconImageTemplate.insertIcon.remove();
+// this.main.pbu.replace(this.iconImageDiv,this.iconImageTemplate.div);
 this.saveButton = this.optionSection.querySelector('#saveButton');
 addEvents();
 return this.optionSection;
@@ -81,7 +81,7 @@ if(! this.main.vu.validate(this.optionSection.querySelectorAll('input.sp-form-co
     return;
 }
 let logoImageId = await this.main.mh.uploadToServer(this.logoImageDiv.querySelector('div.image-template'));
-let iconImageId = await this.main.mh.uploadToServer(this.iconImageTemplate.div);
+//let iconImageId = await this.main.mh.uploadToServer(this.iconImageTemplate.div);
 //don't touch these first properties
 let option = {
 id:this.option$.id,
@@ -90,7 +90,7 @@ tagline:this.taglineControl.value,
 siteUrl:this.siteUrlControl.value,
 activeTheme:this.optionSection.querySelector('input.active-theme:checked').value,
 logoUrl:logoImageId,
-iconUrl:iconImageId,
+iconUrl:'',
 };
 this.main.log(option,0,'Option.saveOption(): Before submit');
 let state = this.main.utils.clone(this.state);

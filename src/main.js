@@ -61,7 +61,7 @@ window.addEventListener('popstate', (e) => {
 let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
 this.host = window.location.host;
-//this.host='godlysensation.senplat.com';
+//this.host='godlysensation.com';
 this.log(this.host,0,'Main.init(): host');
 this.isSite = this.host == this.siteDomain;
 this.isSiteDomain = this.host.endsWith('senplat.com');
@@ -69,6 +69,9 @@ if(this.isSiteDomain){
   if(this.isSite){
       //root or =
       this.username = this.sitename;
+      if(this.isDev()){
+      this.username = 'sp';
+}
   }else{
     this.username = this.host.split('.')[0];
   }
@@ -76,11 +79,9 @@ if(this.isSiteDomain){
     this.username = this.host;
 }
 
-// if(this.isDev()){
-// this.username = 'sp';
-// }
 
-this.isInit = true;
+
+//this.isInit = true;
 //remove last string i.e '/'
 if(pathname.endsWith('/')){
 pathname = pathname.slice(0, -1);
@@ -214,7 +215,17 @@ return homeState;
  * @returns 
  */
 getHomeLink(postType,archiveType,title,id){
-return  `/${postType}/${archiveType}/${title}/${Number(id)}`;
+let url;
+let isHome = title?.toLowerCase()=='home';
+// let isBlog = title?.toLowerCase()=='blog';
+//temp solution
+if(!archiveType){archiveType='s';}
+if(isHome){
+url = '/';
+}else{
+  url = `/${postType}/${archiveType}/${title}/${Number(id)}`;
+}  
+return url;
 }//func
 
 /**
@@ -424,10 +435,11 @@ return loginState
  * @param {HTMLInputElement} input 
  * @param {boolean} isView 
  * @param {any[]} items 
- * @param {string} type 
+ * @param {string} type - currently post, tag
  * @returns 
  */
 async autoComplete(input,isView,items,type='post'){
+let url;  
 let form = input.closest('form.auto-complete');
 let searchTerm = input.value;
 if(!searchTerm){
@@ -452,11 +464,11 @@ return;
                 </ul>
                 `;
         let selectedList = div.querySelector('ul.item-selected');
-        let li;
         for(let i of items){
+          let li;
             if(type=='post'){
-                let state = this.getHomeState(i.username,i.title,i.id,'s');
-               li = this.pbu.createElement('li',['list-group-item'],`${i.title} (${i.postType})`,[{n:'data-url',v:state.url}]);
+                url = this.getHomeLink(i.postType,i.archiveType,i.title,i.id);
+               li = this.pbu.createElement('li',['list-group-item'],`${i.title} (${i.postType})`,[{n:'data-url',v:url}]);
             }else{
                 li = this.pbu.createElement('li',['list-group-item'],`${i}`);
             }
@@ -465,7 +477,7 @@ return;
         //event
         this.pbu.listen(li,'click',()=>{
             if(type=='post'){
-                let url = li.getAttribute('data-url');
+                url = li.getAttribute('data-url');
             if(isView){
                 this.handleView(url,false);
             }else{

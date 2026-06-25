@@ -1542,7 +1542,7 @@ let div2 =
 </div>
 
 <div>
-<button type="button" class="btn btn-primary sp-form-submit-button">Submit</button>
+<a type="button" class="btn btn-primary sp-form-submit-button">Submit</a>
 <div>
 <a type="button" class="${this.main.pbu.showIf(!this.isView)} sp-form-add-field btn btn-primary btn-sm float-end">+ Add Field</a>
 `;

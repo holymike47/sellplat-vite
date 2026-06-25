@@ -24,6 +24,7 @@ let headers = new Headers();
 headers.append("sp","sp");
 headers.append("Content-Type", "application/json");
 headers.append("sp-nsu", state.nextState?`/api${state.nextState.url}`:"");
+headers.append("sp-isInit", state.isInit?"true":"false");  
 let option = {headers:headers,method:state.method};
 //let option = {headers:headers,method:state.method,credentials: 'include'};
 if(state.isAdmin || state.component=='login' || state.component=='register'){

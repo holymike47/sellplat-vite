@@ -11,10 +11,13 @@ this.parent = parent;
 this.isView = false;
 }//
 
-async getRecentPostsWidget(data={type:'new',v:{l:1,cat:-1,we:true,wi:true,wm:true},dClass:[]}){
+async getRecentPostsWidget(data={type:'new',v:{items:null,l:1,cat:-1,we:true,wi:true,wm:true},dClass:[]}){
 let $this = this;
-let state = this.main.utils.clone(this.main.state);
 let displayPosts;
+if(data.v.items){
+displayPosts = data.v.items;
+}else{
+let state = this.main.utils.clone(this.main.state);
 if(this.isView){
 state.link = this.main.fu.getApi(`/home/posts/${state.postType}/${data.v.cat}`,[{n:'limit',v:data.v.l}]);
 displayPosts = await this.main.fu.fetch(state);
@@ -26,27 +29,9 @@ displayPosts = this.parent.posts$.filter(p=>p.postType=='post').filter(p=>data.v
 }
 displayPosts = displayPosts.slice(0, data.v.l);
 }
-
-
+}
 let r =this.parent.pb.getBlockContainer({name:'recentPosts',main:'div',clasz:['d-flex','justify-content-center','align-items-start','flex-wrap','container'],withAlign:true,cmCallback:attachEvents});
 r.el.removeAttribute('contenteditable');
-r.el.setAttribute('l',data.v.l);
-r.el.setAttribute('cat',data.v.cat);
-r.el.setAttribute('we',data.v.we);
-r.el.setAttribute('wi',data.v.wi);
-r.el.setAttribute('wm',data.v.wm);
-
-//let row = r.el.querySelector('.sp-row');
-//card colum class
-//'1','3','4','6','8','9','12'
-// let col = r.el.closest('[c]');
-// let colClass;
-// if(data.v.l==1 || data.v.l==3 || data.v.l==6 || data.v.l==9){
-//   colClass = 'col-md-4';
-// }else{
-//   colClass = 'col-md-3';
-// }
-
 if(displayPosts.length>0){
 for(let p of displayPosts){
 let url = this.main.getHomeLink(p.postType,'s',p.title,p.id);
@@ -55,7 +40,8 @@ let card =
 <div class="card sp-card mb-2">
   
   <div class="card-body text-center">
-  <a href="${url}"  class="card-title sp-route-link sp-detail"><img src="${(p.featuredImageUrl)?this.main.mh.getImageUrl(p.featuredImageUrl,'grid'):''}" class="card-img-top sp-image ${this.main.pbu.showIf(data.v.wi)}"/></a>
+  <a href="${url}"  class="card-title sp-route-link sp-detail">
+  <img src="${this.main.mh.getImageUrl(p.featuredImageUrl,'grid',true)}" class="card-img-top sp-image ${this.main.pbu.showIf(data.v.wi)}"/></a>
     <h5 class="card-title"><a href="${url}" class="card-link sp-route-link sp-detail text-decoration-none">${p.title}</a></h5>
     <a href="${url}" class="btn btn-primary sp-route-link sp-detail">Learn More</a>
   </div>
@@ -73,6 +59,11 @@ this.main.pbu.replace(r.el,'<p>No post found</p>');
 if(this.isView){
 
 }else{
+r.el.setAttribute('l',data.v.l);
+r.el.setAttribute('cat',data.v.cat);
+r.el.setAttribute('we',data.v.we);
+r.el.setAttribute('wi',data.v.wi);
+r.el.setAttribute('wm',data.v.wm);
 attachEvents(null);
 }
 

@@ -483,16 +483,20 @@ return r;
  * 
  * @param {string} imageId 
  * @param {string} variant 
+ * @param {boolean} showPlaceholder
  * @returns 
  */
-getImageUrl(imageId,variant){
+getImageUrl(imageId,variant,showPlaceholder=false){
+let url = '';
 if(!imageId){
-    return '';
+    if(showPlaceholder){
+        url = '/images/placeholder/sp_placeholder_800by400.png';
+    }
 }else if (imageId.startsWith("/images")){
-return imageId;
+url = imageId;
 }else{
-return this.main.config.IMG_DELIVERY + `/${imageId}/${variant}`;
+url = this.main.config.IMG_DELIVERY + `/${imageId}/${variant}`;
 }
-
+return url;
 }//func
 }//class

@@ -107,8 +107,8 @@ $this.main.pbu.replace($this.subscribeDiv,p);
 
 
 async getClientHome(){
-let state = this.main.utils.clone(this.state);;
-state.link = this.main.fu.getApi(this.main.getHomeLink('page',state.archiveType,'home',state.id));
+let state = this.main.utils.clone(this.state);
+state.link = this.main.fu.getApi(`/${state.postType}/${state.archiveType}/${state.title}/${state.id}`);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
@@ -130,10 +130,11 @@ this.post$ = this.postViewDto.posts[0];
 this.state.id = this.post$.id;
 }else{
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(state.url);
+state.link = this.main.fu.getApi(state.url,[{n:'limit',v:1}]);
 let r = await this.main.fu.fetch(state);
 if(r){
-this.post$ = r;
+this.postViewDto = r;
+this.post$ = this.postViewDto.posts[0];
 this.main.log(this.post$,0,'Post.getPost(): single post');
 }
 }
@@ -145,13 +146,14 @@ return postDetail;
 
 
 async getArchive(){
+//this is a category archive
 let category;
 if(this.state.isInit){
 category = this.postViewDto.categories[0];
 this.posts$ = this.postViewDto.posts;
 }else{
     let state = this.main.utils.clone(this.state);
-    state.link = this.main.fu.getApi(this.state.username,false)+ `/home/posts/category/${this.state.id}`;//state.id=categoryId
+    state.link = this.main.fu.getApi(state.url);
     let r = await this.main.fu.fetch(state);
     if(r){
 this.postViewDto = r;
@@ -169,7 +171,7 @@ sidebarType:"NONE"
 };
 let postDetail = await this.getTemplate();
 let mainContentDiv = postDetail.querySelector('div.main-content');
-let recentPostsWidget = await this.widget.getRecentPostsWidget({l:this.posts$.length,cat:category.id,we:true,wi:true,wm:false});
+let recentPostsWidget = await this.widget.getRecentPostsWidget({v:{items:this.posts$,we:true,wi:true,wm:false}});
 let description = `<p>${category.description}</p>`;
 this.main.pbu.appendChild(mainContentDiv,description,recentPostsWidget.querySelector('[m]'));
 this.main.pbu.mount(postDetail);
@@ -242,8 +244,6 @@ for(let m of menuItems){
     let isHome = m.title.toLowerCase()=='home';
       if(isCustom){
         url = m.link;
-      }else if(isHome){
-        url = '/';
       }else{
         url = this.main.getHomeLink(m.postType,'s',m.title,m.postId);
       }
@@ -261,11 +261,9 @@ for(let m of menuItems){
     this.main.pbu.appendChild(navItem,navLink,subMenuUl);
     for(let c of children){
         isCustom = c.postType=='custom';
-        isHome = m.title.toLowerCase()=='home';
+        isHome = c.title.toLowerCase()=='home';
         if(isCustom){
         url = c.link;
-      }else if(isHome){
-        url = '/';
       }else{
         url = this.main.getHomeLink(c.postType,'s',c.title,c.postId);
       }
@@ -297,8 +295,6 @@ this.main.pbu.listen(searchButton,'click',()=>{
     }
     
 });
-
-
 //forms
 let forms = this.main.pbu.queryAll('.sp-contact-form')||[];
 for(let form of forms){
@@ -315,8 +311,7 @@ for(let button of subscribeButtons){
     form.innerHTML = 
     `
     ${this.main.pbu.createFormControl({serialize:true,title:"Name",placeholder:"Name",clasz:['name','sp-validation-required']})}
-    ${this.main.pbu.createFormControl({serialize:true,title:"Email",placeholder:"Email",type:"email",clasz:['email','sp-validation-required']})}
-    <a class="btn btn-primary w-100 my-2 sp-button" type="button">Subscribe</a>
+    ${this.main.pbu.createFormControl({serialize:true,title:"Email",placeholder:"Email",type:"email",withSubmit:true,clasz:['email','sp-validation-required']})}
     `
     let nameControl = form.querySelector('input.name');
     let emailControl = form.querySelector('input.email');
@@ -333,16 +328,17 @@ for(let button of subscribeButtons){
       }
       //
       let state = this.main.utils.clone(this.state);
-      this.subscriber = {
-        firstName:nameControl.value,/**important,to enable binding on backend */
-        email: emailControl.value
+      let subscriber = {
+        name:nameControl.value,/**important,to enable binding on backend */
+        email: emailControl.value,
+        list:'site'
         };
       
-      state.link = this.main.fu.getApi(state.username,false,'exists');
-      state.body = this.subscriber.email;
+      state.link = this.main.fu.getApi('subscribe',[{n:'stage',v:'exist'}]);
+      state.body = JSON.stringify(subscriber);
       state.isModal = true;
       let r = await this.main.fu.fetch(state);
-        if(r=='exists'){
+        if(r=='subscribed'){
             //you ve already subscribed
             this.main.pbu.addClass(button,['disabled']);
             this.main.utils.genCookie(true,state.username);
@@ -358,8 +354,8 @@ for(let button of subscribeButtons){
             if(! this.main.vu.validate(authTokenTemplate.input)){return;}
             if(authTokenTemplate.input.value==this.authToken){
                 //now save subscriber
-            state.link = this.main.fu.getApi(this.state.username,false,'subscribe');
-            state.body = JSON.stringify(this.subscriber);
+            state.link = this.main.fu.getApi('subscribe',[{n:'stage',v:'save'}]);
+            state.body = JSON.stringify(subscriber);
             let r = await this.main.fu.fetch(state);
             if(r=='ok'){
                 this.main.pbu.addClass(button,['disabled']);
@@ -367,17 +363,12 @@ for(let button of subscribeButtons){
                 modal.title.textContent="";
                this.main.pbu.replace(form,'Thank you for subscribing');
             }
-                
 
             }else{
                 this.main.utils.notify('Wrong, please try again',2,'c',modal.notice);
             }
         });
         }
-
-    //   if(r=='ok'){
-    //     form.innerHTML = '<p>Thank You</p>';
-    //   }
       
     });
     });
@@ -398,8 +389,6 @@ let iti = this.main.intlTelInput(pf, {
   loadUtils: () => import("intl-tel-input/utils"),
 });
 };
-
-
 let submitButton = form.querySelector('.sp-form-submit-button');
 this.main.pbu.listen(submitButton,'click',async ()=>{
     let controls = form.querySelectorAll('.sp-form-control:not(div)')||[];
@@ -412,17 +401,17 @@ this.main.pbu.listen(submitButton,'click',async ()=>{
     for(let c of controls){
         title = c.closest('div.sp-form-control').querySelector('.sp-form-title').textContent;
         value = c.value;
-        message += `\n${title}:${value}`;
+        message += `<p>${title}:${value}</p>`;
     }
     this.main.log(message,0,'Post.processForms(): message to submit');
     let state = this.main.utils.clone(this.state);
-    state.link = this.main.fu.getApi(state.username,false,'submit-contact-form');
-    state.body = JSON.stringify(message);
+    state.link = this.main.fu.getApi('submit-contact-form');
+    state.body = message;
     let r = await this.main.fu.fetch(state);
-    if(r && r.id==200){
+    if(r =='sent'){
         this.main.pbu.appendChild(submitButton.parentElement,
     `<p class="border border-success mt-2 p-2">Thank you for your message. We will get back to you shortly</p>`);
-    submitButton.setAttribute("disabled","disabled");
+    this.main.pbu.addClass(submitButton,['disabled']);
     }
 }
 })
@@ -434,10 +423,11 @@ this.main.pbu.listen(submitButton,'click',async ()=>{
  * @param {HTMLInputElement} input 
  */    
 async search(input){
+if(input.value.length<2){return;}  
 if(!this.main.vu.sanitize([input])){return;}
 let regex = new RegExp(`${input.value}`, "i");
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(state.username,false,`/home/posts/${state.postType}/-1`,[{n:'limit',v:-1}]);
+state.link = this.main.fu.getApi(`/home/posts/${state.postType}/-1`,[{n:'limit',v:-1}]);
 let posts = await this.main.fu.fetch(state);
 posts = posts.filter(p=>regex.test(p.title));
 this.main.autoComplete(input,true,posts,'post');
