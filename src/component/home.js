@@ -211,10 +211,13 @@ let imageUrl = this.main.media.getMediaUrl(this.post$.featuredImageUrl,true,fals
 let meta = 
 `
  <!-- <main seo /> -->
+ <link rel="canonical" href="${window.location.href}" />
  <meta name="description" content="${excerpt}" />
  <meta name="robots" content="index, follow" />
  <!-- <open graph /> -->
 <meta property="og:image" content="${imageUrl}" />
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
 <meta property="og:title" content="${this.post$.title}" />
 <meta property="og:description" content="${excerpt}" />
 <meta property="og:url" content="${window.location.href}" />

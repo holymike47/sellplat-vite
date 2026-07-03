@@ -57,7 +57,7 @@ this.activeThemeDiv=this.optionSection.querySelector('.active-theme');//<input>[
 //logo
 this.logoImageDiv = this.optionSection.querySelector('#logoImageDiv');
 this.logoImageTemplate = this.main.media.getTemplate({src:$this.main.media.getMediaUrl(o.logoUrl),mediaType:"image",width:"300", height:"300",divClasz:['w-50']});
-this.main.pbu.replace(this.logoImageDiv,this.logoImageTemplate.div);
+this.main.pbu.replace(this.logoImageDiv,this.logoImageTemplate);
 this.saveButton = this.optionSection.querySelector('#saveButton');
 addEvents();
 return this.optionSection;
