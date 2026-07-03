@@ -59,8 +59,8 @@ this.main.pbu.appendChild(this.homeComponent,
 
 <div class="social-share">
 <div class="shareon" data-url="${window.location.href}">
-  <a class="facebook" data-title="${p.title}" data-hashtags="senplat"></a>
-  <a class="twitter" data-via="holymike47" data-hashtags="senplat"></a>
+  <a class="facebook" data-title="${p.title}" ></a>
+  <a class="twitter" ></a>
   <a class="whatsapp" data-url="${window.location.href}"></a>
   <a class="email"></a>
 </div>
@@ -206,13 +206,25 @@ this.addViewEvents();
 
 async setMeta(){
 document.title = this.post$.title;
+let excerpt = (this.post$.excerpt)?this.post$.excerpt:'';
+let imageUrl = this.main.media.getMediaUrl(this.post$.featuredImageUrl,true,false);
 let meta = 
 `
-<meta property="og:image" content="${this.main.media.getMediaUrl(this.post$.featuredImageUrl,true,false)}" />
+ <!-- <main seo /> -->
+ <meta name="description" content="${excerpt}" />
+ <meta name="robots" content="index, follow" />
+ <!-- <open graph /> -->
+<meta property="og:image" content="${imageUrl}" />
 <meta property="og:title" content="${this.post$.title}" />
-<meta property="og:description" content="${(this.post$.excerpt)?this.post$.excerpt:''}" />
+<meta property="og:description" content="${excerpt}" />
 <meta property="og:url" content="${window.location.href}" />
 <meta property="og:type" content="website" />
+<!-- <twitter /> -->
+<meta name="twitter:card" content="summary_large_image" /> <!-- Use 'summary' for a square image -->
+<!-- Required Tags -->
+<meta name="twitter:title" content="${this.post$.title}" />
+<meta name="twitter:description" content="${excerpt}" />
+<meta name="twitter:image" content="${imageUrl}" />
 `;
 this.main.pbu.appendChild(document.head,meta);
 }//func
