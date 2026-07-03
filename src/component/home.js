@@ -205,27 +205,28 @@ this.addViewEvents();
 }//func
 
 async setMeta(){
-document.title = this.post$.title;
+let title = this.post$.title;
 let excerpt = (this.post$.excerpt)?this.post$.excerpt:'';
 let imageUrl = this.main.media.getMediaUrl(this.post$.featuredImageUrl,true,false);
+let href = window.location.href;
+document.querySelector('#siteTitle').textContent = title;
 let meta = 
 `
- <!-- <main seo /> -->
- <link rel="canonical" href="${window.location.href}" />
+ <link rel="canonical" href="${href}" />
  <meta name="description" content="${excerpt}" />
  <meta name="robots" content="index, follow" />
- <!-- <open graph /> -->
+
 <meta property="og:image" content="${imageUrl}" />
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
-<meta property="og:title" content="${this.post$.title}" />
+<meta property="og:title" content="${title}" />
 <meta property="og:description" content="${excerpt}" />
-<meta property="og:url" content="${window.location.href}" />
+<meta property="og:url" content="${href}" />
 <meta property="og:type" content="website" />
-<!-- <twitter /> -->
+
 <meta name="twitter:card" content="summary_large_image" /> <!-- Use 'summary' for a square image -->
 <!-- Required Tags -->
-<meta name="twitter:title" content="${this.post$.title}" />
+<meta name="twitter:title" content="${title}" />
 <meta name="twitter:description" content="${excerpt}" />
 <meta name="twitter:image" content="${imageUrl}" />
 `;
