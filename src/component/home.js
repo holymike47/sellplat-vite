@@ -1,6 +1,8 @@
 // @ts-check
 import { PageBuilder } from "./page-builder";
 import { Widget } from "./widget";
+import { init } from "shareon";
+import "shareon/css"; // most bundlers will transpile this CSS
 export class Home{
 /**
  * 
@@ -8,6 +10,8 @@ export class Home{
  * @param {any} state 
  */
 constructor(main,state){
+//shareon  
+this.shareonInit = init;
 this.main = main;
 this.state = state;
 document.title = "Home";
@@ -25,6 +29,8 @@ this.main.pbu.appendChild(this.homeComponent,
 `
 <!--viewContainer-->
 <div id = "viewContainer" class="container" style="min-height: 100vh;">
+<header id="mainHeader" class="header mb-4">
+</header>
 <main id="mainContent" class="sp-container">
      <!--Row-->
 <div class="row sp-row">
@@ -32,7 +38,7 @@ this.main.pbu.appendChild(this.homeComponent,
 <!--Post title and feature image-->
 <div class="cover ${this.main.pbu.showIf(p.slug!='home')} ${this.main.pbu.addClassIf(!p.featuredImageUrl,['p-4', 'p-md-5','mb-4','rounded','text-body-emphasis', 'bg-body-secondary'])}">
   <div class="featured-image text-center ${this.main.pbu.showIf(p.featuredImageUrl)}">
-      <img src=${this.main.mh.getImageUrl(p.featuredImageUrl,'public')} alt="" class="featured-image img-fluid mx-auto"/>
+      <img src=${this.main.media.getMediaUrl(p.featuredImageUrl,true,false)} alt="" class="featured-image img-fluid mx-auto"/>
     </div>
   <div class="px-0">
     <h1 class="display-4 fst-italic title text-center">${p.title}</h1>
@@ -49,6 +55,15 @@ this.main.pbu.appendChild(this.homeComponent,
 </div>
   
 <div class="main-content">
+</div>
+
+<div class="social-share">
+<div class="shareon" data-url="${window.location.href}">
+  <a class="facebook" data-title="${p.title}" data-hashtags="senplat"></a>
+  <a class="twitter" data-via="holymike47" data-hashtags="senplat"></a>
+  <a class="whatsapp" data-url="${window.location.href}"></a>
+  <a class="email"></a>
+</div>
 </div>
 
 <div class="subscribe">
@@ -68,14 +83,20 @@ this.main.pbu.appendChild(this.homeComponent,
 
 </section>
 </main>
+<footer id="mainFooter" class="footer">
+</footer>
 </div>
 <!--#viewContainer-->
 `  
 );
 
+this.header = this.homeComponent.querySelector('header.header');
+this.footer = this.homeComponent.querySelector('footer.footer');
 this.mainContentDiv = this.homeComponent.querySelector('div.main-content');
 this.sidebarDiv = $this.homeComponent.querySelector('div.sidebar');
 this.subscribeDiv = $this.homeComponent.querySelector('div.subscribe');
+this.main.pbu.replace(this.header,(this.headerTemplate)?this.headerTemplate:await this.getMenuTemplate('main'));
+this.main.pbu.replace(this.footer,(this.footerTemplate)?this.footerTemplate:await this.getMenuTemplate('footer'));
 
 if(!this.state.isArchive){
 await updateView();
@@ -112,16 +133,16 @@ $this.main.pbu.replace($this.subscribeDiv,p);
 
 async getClientHome(){
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(state.url);
+//note: for home, url is /, must be set properly to call backend;
+// the method is also called only once
+state.link = this.main.fu.getApi(state.isHome?'/post/page/s/home/0':state.url,[{n:'limit',v:-1}]);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
 this.main.log(this.postViewDto,0,'Post.getClientHome(): this.postViewDto');
 this.main.setTheme(this.postViewDto.option);
-this.main.pbu.mount(await this.getMenuTemplate('main'),'h');
-this.main.pbu.mount(await this.getMenuTemplate('footer'),'f');
-// this.headerTemplate = await this.getMenuTemplate('main');
-// this.footerTemplate = await this.getMenuTemplate('footer');
+this.headerTemplate = await this.getMenuTemplate('main');
+this.footerTemplate = await this.getMenuTemplate('footer');
 
 (state.isArchive)?await this.getArchive(): await this.getPost();
 }
@@ -134,8 +155,7 @@ this.post$ = this.postViewDto.posts[0];
 this.state.id = this.post$.id;
 }else{
 let state = this.main.utils.clone(this.state);
-state.link = this.main.fu.getApi(state.url);
-//state.link = this.main.fu.getApi(state.url,[{n:'limit',v:1}]);
+state.link = this.main.fu.getApi(state.url,[{n:'limit',v:1}]);
 let r = await this.main.fu.fetch(state);
 if(r){
 this.postViewDto = r;
@@ -145,10 +165,11 @@ this.main.log(this.post$,0,'Post.getPost(): single post');
 }
 let postDetail = await this.getTemplate();
 this.main.pbu.mount(postDetail);
+this.setMeta();
 this.addViewEvents();
+this.shareonInit();
 return postDetail;
-}
-
+}//func
 
 async getArchive(){
 //this is a category archive
@@ -158,7 +179,7 @@ category = this.postViewDto.categories[0];
 this.posts$ = this.postViewDto.posts;
 }else{
     let state = this.main.utils.clone(this.state);
-    state.link = this.main.fu.getApi(state.url);
+    state.link = this.main.fu.getApi(state.url,[{n:'limit',v:-1}]);
     let r = await this.main.fu.fetch(state);
     if(r){
 this.postViewDto = r;
@@ -181,6 +202,19 @@ let recentPostsWidget = await this.widget.getRecentPostsWidget({v:{items:this.po
 this.main.pbu.appendChild(mainContentDiv,recentPostsWidget.querySelector('[p]'));//recentPosts-parent
 this.main.pbu.mount(postDetail);
 this.addViewEvents();
+}//func
+
+async setMeta(){
+document.title = this.post$.title;
+let meta = 
+`
+<meta property="og:image" content="${this.main.media.getMediaUrl(this.post$.featuredImageUrl,true,false)}" />
+<meta property="og:title" content="${this.post$.title}" />
+<meta property="og:description" content="${(this.post$.excerpt)?this.post$.excerpt:''}" />
+<meta property="og:url" content="${window.location.href}" />
+<meta property="og:type" content="website" />
+`;
+this.main.pbu.appendChild(document.head,meta);
 }//func
 /**
  * 
@@ -211,7 +245,7 @@ async getMenuTemplate(slug,clasz=[]){
         nav.innerHTML = 
     `
     <div class="container-fluid">
-    <a class="${this.main.pbu.showIf(this.postViewDto.option.logoUrl)} sp-route-link sp-detail sp-slug-link me-2" data-slug="home" href="/"><img width="60" height="60" src="${this.main.mh.getImageUrl(this.postViewDto.option.logoUrl,'public')}" /></a>
+    <a class="${this.main.pbu.showIf(this.postViewDto.option.logoUrl)} sp-route-link sp-detail sp-slug-link me-2" data-slug="home" href="/"><img width="60" height="60" src="${this.main.media.getMediaUrl(this.postViewDto.option.logoUrl)}" /></a>
     <a class="nav-link sp-nav-link sp-site-title sp-route-link sp-detail sp-slug-link" data-slug="home" href="/">${this.postViewDto.option.siteName}</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>

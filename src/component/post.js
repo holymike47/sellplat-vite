@@ -260,10 +260,9 @@ $this.main.pbu.show($this.postTagsSection);
 $this.renderTags();
 $this.main.pbu.show($this.isFeaturedSection,$this.isStickySection,$this.allowCommentsSection);
 //featured image
-$this.featuredImageTemplate = $this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(p.featuredImageUrl,'grid')});
+$this.featuredImageTemplate = $this.main.media.getTemplate({src:$this.main.media.getMediaUrl(p.featuredImageUrl,true,false),mediaType:"image"});
 //cant use an icon as featured image
-$this.featuredImageTemplate.insertIcon.remove();
-$this.main.pbu.appendChild($this.featuredImageSection,$this.featuredImageTemplate.div);
+$this.main.pbu.appendChild($this.featuredImageSection,$this.featuredImageTemplate);
 }//if
 //sidebar type
 $this.main.pbu.appendChild($this.sidebarTypeDiv,
@@ -328,7 +327,7 @@ $this.main.pbu.listen($this.sidebarTypeSelector,'change',()=>{
  */
 setListTable(posts=null){
 let isPost = this.state.postType=='post';
-let titles = ["Title","Category","Author","Post Type","Status"];
+let titles = ["Title","Category","Author","Status"];
 if(!isPost){
     titles = ["Title","Status"];
 }
@@ -337,15 +336,15 @@ let displayPosts = (posts)?posts: this.posts$.filter(p=>p.postType==this.state.p
 for(let p of displayPosts){
 let i = {
 id:p.id,
-href:this.main.getHomeLink(p.postType,'s',p.title,p.id),
-titles:[p.title,(p.category?.title)?p.category.title:'None',(p.author)?p.author.firstName:'',p.postType,p.contentStatus],
+href:this.main.getHomeLink('post',p.postType,'s',p.title,p.id),
+titles:[p.title,(p.category?.title)?p.category.title:'None',(p.author)?p.author.firstName:'',p.contentStatus],
 editHref:this.main.getLink('post',p.postType,'edit',p.id),
 deleteHref:``
 };
 if(!isPost){
     i = {
     id:p.id,
-    href:this.main.getHomeLink(p.postType,'s',p.title,p.id),
+    href:this.main.getHomeLink('post',p.postType,'s',p.title,p.id),
     titles:[p.title,p.contentStatus],
     editHref:this.main.getLink('post',p.postType,'edit',p.id),
     deleteHref:``
@@ -658,7 +657,7 @@ v:{
 };
 sidebarWidgets.push(m);
 }
-let featuredImageUrl = (this.state.postType=='post')?await this.main.mh.uploadToServer(this.featuredImageSection.querySelector('div.image-template')):''
+let featuredImageUrl = (this.state.postType=='post')?await this.main.media.uploadToServer(this.featuredImageSection.querySelector('div.media-template')):''
 ///
 let post = {
 id:this.post$.id,
@@ -686,11 +685,12 @@ authorId:this.post$.authorId /**important */
 this.main.log(post,0,'Post.savePost(): Before submit');
 let state = this.main.utils.clone(this.state);
 state.body = JSON.stringify(post);
+state.link = this.main.fu.getApi(state.url,[{n:'mediaIds',v:this.main.media.oldMediaIds}]);
 let r = await this.main.fu.fetch(state);
 if(r>0){
 this.main.utils.notify('Saved',0,'m');
-this.main.mh.deleteFromServer(null);
 this.state = this.main.replaceState(this.post$,this.state,r);
+this.main.media.resetMediaIds();
 }
 }//submitPost
 

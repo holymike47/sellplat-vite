@@ -545,13 +545,13 @@ this.show(child);
  * @param {HTMLElement} component 
  * @param {string} type
  */
-mount(component,type='b'){
+mount(component,type='body'){
 let section;
-if(type=='b'){
+if(type=='body'){
 section = this.query('#replace');
-}else if(type=='h'){
+}else if(type=='header'){
 section = this.query('#mainHeader');
-}else if(type=='f'){
+}else if(type=='footer'){
 section = this.query('#mainFooter');
 }
 this.replace(section,component);

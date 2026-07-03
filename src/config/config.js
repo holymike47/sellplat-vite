@@ -54,4 +54,5 @@ export const config={
   ROLES :["CONTRIBUTOR","AUTHOR","EDITOR"],
   //##########
   ALERT_TYPE:["alert-success", "alert-warning", "alert-danger"],
+  ICON_CLASZ:{"image":"bi-image","audio":"bi-music-note","video":"bi-youtube"}
 };

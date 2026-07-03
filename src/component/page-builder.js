@@ -34,6 +34,7 @@ this.elClass = {
     list:['sp-block','sp-list'],
     image:['sp-block','sp-image'],
     audio:['sp-block','sp-audio'],
+    video:['sp-block','sp-video'],
     /** Components */
     cover:['sp-component','sp-cover'],
     card:['sp-component','sp-card','card',this.blockMargin],
@@ -245,7 +246,9 @@ case 'list':
 bc = $this.getListBlock(data);
 break;
 case 'image':
-data.v.src = $this.main.mh.getImageUrl(data.v.src,'public');
+case 'audio':
+case 'video':
+data.v.src = $this.main.media.getMediaUrl(data.v.src,true,false);
 bc = $this.getImageBlock(data);
 break;
 case 'form':
@@ -253,11 +256,11 @@ bc = $this.getFormBlock(data);
 break;
 //components :sp-component
 case 'cover':
-data.v.src = $this.main.mh.getImageUrl(data.v.src,'public');
+data.v.src = $this.main.media.getMediaUrl(data.v.src,true,false);
 bc = $this.getCoverComponent(data);
 break;
 case 'card':
-data.v.src = $this.main.mh.getImageUrl(data.v.src,'public');
+data.v.src = $this.main.media.getMediaUrl(data.v.src);
 bc = $this.getCardComponent(data);
 break;
 case 'cta':
@@ -339,7 +342,7 @@ let bodytext;
 let image;
 let input;
 let variant;
-let imageTemplate;
+let mediaTemplate;
 switch(name){
 case 'heading':
 m.v ={
@@ -384,10 +387,12 @@ li:inputs
 };
 break;
 case 'image':
+case 'audio':
+case 'video':
 m.v={
-src:await this.main.mh.uploadToServer(el.querySelector('.image-template'))
+src:await this.main.media.uploadToServer(el.querySelector('.media-template')),
+mediaType:name
 };
-
 break;
 case 'form':
 let titles = [];
@@ -410,9 +415,9 @@ button = el.querySelectorAll('.sp-button');//max = 2
 //image = el.querySelector('.main-image');
 m.v = {
 variant : this.main.pbu.getAttribute(el,'data-variant'),
+src:await this.main.media.uploadToServer(el.querySelector('.media-template')),
 headingText:el.querySelector('.sp-heading').textContent,
 bodyText : el.querySelector('.sp-body-text').textContent,
-src:await this.main.mh.uploadToServer(el.querySelector('.image-template')),
 b1Text:button[0].textContent,
 b1Href:this.setHref(button[0])
 };
@@ -423,13 +428,12 @@ m.v.b2Href = this.setHref(button[1]);
 }
 break;
 case 'card':
-//image = el.querySelector('.main-image');
 let icon = el.querySelector('.main-icon');
 button = el.querySelector('.sp-button');//single button for card
 m.v = {
+src:await this.main.media.uploadToServer(el.querySelector('.media-template')),
 headingText:el.querySelector('.sp-heading').textContent,
 bodyText : el.querySelector('.sp-body-text').innerHTML,
-src:await this.main.mh.uploadToServer(el.querySelector('.image-template')),
 bText:button?.textContent,
 bHref:this.setHref(button),
 icon:icon?.getAttribute('icon')
@@ -799,6 +803,7 @@ return wrapper;
 getBlockSettings(data){
 //data.wrapper : deleted
 //container : class added
+let isRow = data.type=='r';
 let isColumn = data.type=='c';
 let isEl = data.type=='m';
 let div = this.main.pbu.createElement('div');
@@ -819,11 +824,11 @@ for(let n of names){
     this.main.pbu.listen(n,'click',()=>{
         let container;//just for ref, where the class is actually applied
         let wrapper = data.wrapper;//if column wrapper = bc;
-        if(data.type=='r'){
+        if(isRow){
             container = wrapper.querySelector('[n]');
-        }else if(data.type=='c'){
+        }else if(isColumn){
             container = wrapper;
-        }else if(data.type=='m'){
+        }else if(isEl){
             //here wrapper = blockContainer;
             //NOTE: for button, parent is a div
             parent  = wrapper.querySelector('[p]');
@@ -858,6 +863,7 @@ for(let n of names){
                     });
                     break;
                     case "remove":
+                        this.main.media.addMediaIds({div:wrapper});
                         if(isColumn){
                             let bcs = container.querySelectorAll('.sp-bc');
                             for(let bc of bcs){
@@ -904,12 +910,12 @@ dropDown.innerHTML =
     <li><button action="getButtonBlock" block-type="block" class="dropdown-item" type="button">Button</button></li>
     <li><button action="getHeadingBlock" block-type="block" class="dropdown-item" type="button">Heading</button></li>
     <li><button action="getRichTextBlock" block-type="block" class="dropdown-item" type="button">Rich Text</button></li>
+    <li><button action="getFormBlock" block-type="block" class="dropdown-item" type="button">Form</button></li>
     <li><button action="getTableBlock" block-type="block" class="dropdown-item" type="button">Table</button></li>
     <li><button action="getListBlock" block-type="block" class="dropdown-item" type="button">List</button></li>
     <li><button action="getImageBlock" block-type="block" class="dropdown-item" type="button">Image</button></li>
-    <li><button action="getFormBlock" block-type="block" class="dropdown-item" type="button">Form</button></li>
-    <li><button action="getAudioBlock" block-type="block" class="dropdown-item" type="button">Audio</button></li>
-    <li><button action="getVideoBlock" block-type="block" class="dropdown-item" type="button">Video</button></li>
+    <li><button action="getVideoBlock" block-type="block" data-media-type="audio" class="dropdown-item" type="button">Audio</button></li>
+    <li><button action="getVideoBlock" block-type="block" data-media-type="video" class="dropdown-item" type="button">Video</button></li>
 	 <li><hr class="dropdown-divider"></li>
     <li><button action="getCoverComponent" block-type="component" data-variant="1" class="dropdown-item" type="button">Cover 1</button></li>
     <li><button action="getCoverComponent" block-type="component" data-variant="2" class="dropdown-item" type="button">Cover 2</button></li>
@@ -930,9 +936,9 @@ this.main.pbu.listen(di,'click',async ()=>{
         block = await this.parent.widget[action]();
     }else{
         //check it its cover as there are types
-        let variant = this.main.pbu.getAttribute(di,'data-variant');
-        if(variant){
-            block = this[action]({type:'new',v:{variant:variant},dClass:[]});
+        let mediaType = this.main.pbu.getAttribute(di,'data-media-type');
+        if(mediaType){
+            block = this[action]({type:'new',v:{mediaType:mediaType},dClass:[]});
         }else{
             block = this[action]();
         }
@@ -1100,61 +1106,16 @@ return {bc:blockContainer,el:mainElement,parent:parent,cMenu:cMenu};
 /**
  * 
  * @param {any} data 
- * @param {string[]} dClass 
- * @returns {HTMLElement}
- */
-getAudioBlock(data={standAlone:true,withCm:true,type:'new',src:''},dClass=[]){
-let $this = this;
-/**@type {HTMLElement}*/ let bc;
-/**@type {HTMLElement}*/let el;
-/**@type {HTMLElement}*/let parent;
-let elClass = [...this.elClass.audio,...dClass];
-/**@type {any}*/let audioTemplate;
-/**@type {HTMLElement}*/let audio;
-//standAlone,main,text,clasz,attr
-let r = this.getBlockContainer(data.withCm,'div',elClass,'audio');
-bc = r.bc;
-el=r.el;
-parent = r.parent;
-//
-audioTemplate = this.main.mh.getAudioTemplate(data.src);
-audio = audioTemplate.audio;
-if(this.isView){
-    audioTemplate.div.removeChild(audioTemplate.div.querySelector('.placeholder-section'));
-}
-this.main.pbu.appendChild(el,audioTemplate.div);
-
-if(data.withCm && !this.isView){
-attachEvents();
-}
-//finally
-return bc;
-
-async function attachEvents(){
-$this.audioCm = [];
- 
-}//inner()
-
-}//func
-/**
- * 
- * @param {any} data 
  * @returns {HTMLElement}
  */
 getImageBlock(data={type:'new',v:{src:''},dClass:[]}){
 let $this = this;
 let elClass = [...this.elClass.image,...data.dClass];
 let r = this.getBlockContainer({name:'image',main:'div',clasz:elClass,cmCallback:attachEvents});
-let imageTemplate = this.main.mh.getImageTemplate({src:data.v.src,isView:this.isView});
-
+let div = this.main.media.getTemplate({src:data.v.src,mediaType:'image',isView:this.isView});
+r.el.appendChild(div);
 if(this.isView){
-if(data.v.src){
-    r.el.appendChild(imageTemplate);
-}
 }else{
-r.el.appendChild(imageTemplate.div);
-imageTemplate.insertIcon.remove();
-imageTemplate.insertButton.remove();
 attachEvents(null);
 }
 //finally
@@ -1171,6 +1132,36 @@ if(save==true){
 }//inner()
 
 }//func
+/**
+ * 
+ * @param {any} data 
+ * @returns {HTMLElement}
+ */
+getVideoBlock(data={type:'new',v:{src:'',mediaType:''},dClass:[]}){
+let $this = this;
+let elClass = [...this.elClass.video,...data.dClass];
+let r = this.getBlockContainer({name:'video',main:'div',clasz:elClass,cmCallback:attachEvents});
+let div = this.main.media.getTemplate({src:data.v.src,mediaType:data.v.mediaType,isView:this.isView});
+r.el.appendChild(div);
+if(this.isView){
+}else{
+attachEvents(null);
+}
+//finally
+return r.bc;
+/**
+ * 
+ * @param {boolean|null} save 
+ */
+async function attachEvents(save){
+if(save==true){
+    return true;
+}
+
+}//inner()
+
+}//func
+
 /**
  * 
  * @param {any} data 
@@ -1707,7 +1698,7 @@ let r = this.getBlockContainer({name:'cover',main:'main',clasz:elClass,cmCallbac
 let imageTemplate;
 //el.style.height = '80vh';
 if(data.v.variant==1){
-imageTemplate = this.main.mh.getImageTemplate({src:data.v.src,width:"72", height:"57",isView:this.isView});
+imageTemplate = this.main.media.getTemplate({src:data.v.src,mediaType:"image",width:"72", height:"57",isView:this.isView});
     r.el.innerHTML = 
  `
 <div class="text-center sp-cover-image">
@@ -1720,7 +1711,7 @@ imageTemplate = this.main.mh.getImageTemplate({src:data.v.src,width:"72", height
   </div>
 `;
 }else if(data.v.variant==2){
-imageTemplate = this.main.mh.getImageTemplate({src:data.v.src,isView:this.isView});
+imageTemplate = this.main.media.getTemplate({src:data.v.src,mediaType:"image",isView:this.isView});
 r.el.innerHTML = 
 `
 <div class="container col-xxl-8 px-4 py-5">
@@ -1834,7 +1825,7 @@ getCardComponent(data={type:'new',v:{imageSrc:''},dClass:[]}){
 let $this = this;
 let elClass = [...this.elClass.card,...data.dClass];
 let r = this.getBlockContainer({name:'card',main:'div',clasz:elClass,cmCallback:attachEvents});
-let imageTemplate = this.main.mh.getImageTemplate({src:data.v.src,isView:this.isView});
+let imageTemplate = this.main.media.getTemplate({src:data.v.src,mediaType:"image",isView:this.isView});
 r.el.style.width = '18rem';
 //
 this.main.pbu.appendChild(r.el,

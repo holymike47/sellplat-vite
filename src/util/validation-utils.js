@@ -145,6 +145,7 @@ switch(type){
             }
             if(valid){
                     el.setAttribute('data-path',u.pathname);
+                    el.setAttribute('data-hostname',u.hostname);
                     this.main.log(u.pathname,0,'ValidationUtils.validate(): url.pathname');
                 }
         } catch(error) {

@@ -34,14 +34,14 @@ let r =this.parent.pb.getBlockContainer({name:'recentPosts',main:'div',clasz:['d
 r.el.removeAttribute('contenteditable');
 if(displayPosts.length>0){
 for(let p of displayPosts){
-let url = this.main.getHomeLink(p.component,p.postType,'s',p.title,p.id);
+let url = this.main.getHomeLink('post',p.postType,'s',p.title,p.id);
 let card = 
 `
 <div class="card col-md-6 sp-card mb-2">
   
   <div class="card-body text-center">
   <a href="${url}"  class="card-title sp-route-link sp-detail">
-  <img src="${this.main.mh.getImageUrl(p.featuredImageUrl,'grid',true)}" class="card-img-top sp-image ${this.main.pbu.showIf(data.v.wi)}"/></a>
+  <img src="${this.main.media.getMediaUrl(p.featuredImageUrl)}" class="card-img-top sp-image ${this.main.pbu.showIf(data.v.wi)}"/></a>
     <h5 class="card-title p-2"><a href="${url}" class="card-link sp-route-link sp-detail text-decoration-none">${p.title}</a></h5>
   </div>
  

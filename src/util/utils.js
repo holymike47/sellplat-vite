@@ -13,8 +13,17 @@ this.config = config;
 this.pbu = new PbUtils(null);
 }//
 
-getUUID(){
-return crypto.randomUUID();
+/**
+ * 
+ * @param {number} length 
+ * @returns 
+ */
+getUUID(length){
+let uuid = `${crypto.randomUUID()}`;
+if(length){
+    uuid = uuid.substring(0,length);
+}
+return uuid
 //const components = [];
     
     // User agent
@@ -37,6 +46,7 @@ return crypto.randomUUID();
     
     //return CryptoJS.SHA256(components.join('|')).toString();
 }//
+
 
 /**
  * 

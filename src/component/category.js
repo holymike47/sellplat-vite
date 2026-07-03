@@ -1,5 +1,4 @@
 // @ts-check
-import { MediaHandler } from "./media-handler";
 export class Category {
 /**
  * 
@@ -126,9 +125,8 @@ this.categoryDescriptionControl = this.categorySection.querySelector('input.desc
 this.categoryParentSelector = this.categorySection.querySelector('select.parent');//<select>
 //image
 this.categoryImageDiv = this.categorySection.querySelector('#categoryImageDiv');
-this.featuredImageTemplate = this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(c.featuredImageUrl,'grid')});
-this.featuredImageTemplate.insertIcon.remove();
-this.main.pbu.replace(this.categoryImageDiv,this.featuredImageTemplate.div);
+this.featuredImageTemplate = this.main.media.getTemplate({src:$this.main.media.getMediaUrl(c.featuredImageUrl),mediaType:"image"});
+this.main.pbu.replace(this.categoryImageDiv,this.featuredImageTemplate);
 //
 this.saveCategoryButton=this.categorySection.querySelector('#saveCategoryButton');
 //
@@ -178,7 +176,7 @@ if(!this.main.vu.validate(this.categoryTitleControl,this.categoryDescriptionCont
 }
 let title = this.categoryTitleControl.value;
 let parentId = this.categoryParentSelector.value;
-let imageId = await this.main.mh.uploadToServer(this.categoryImageDiv.querySelector('div.image-template'));
+let imageId = await this.main.media.uploadToServer(this.categoryImageDiv.querySelector('div.media-template'));
 //
 let category ={
 id:this.category$.id,
@@ -204,7 +202,7 @@ if(r>0){
         this.state = this.main.replaceState(this.category$,this.state,r);
     }
 //always
-this.main.mh.deleteFromServer(null);
+this.main.media.deleteFromServer(null);
 }
 }//func
 

@@ -70,8 +70,11 @@ let headers = new Headers();
 if(data.authToken){
 headers.append("Authorization", `Bearer ${data.authToken}`);
 }
-let method = (data.body)?'POST' :'GET';
-let option = {headers:headers,method:method};
+if(data.contentType){
+headers.append("content-Type", data.contentType);   
+}
+//note: method is set explicitely
+let option = {headers:headers,method:data.method};
 if(data.body){
     option.body = data.body;
 }
@@ -79,9 +82,16 @@ if(data.body){
 let request = new Request(data.link,option);
 try{
 let response = await window.fetch(request);
+this.main.log(response,0,'FetchUtils.fetchExt(): response');
+if(response.ok){
+if(data.noResponse){
+return true;
+}else{
 let responseJson = await response.json();
 this.main.log(responseJson,0,'FetchUtils.fetchExt(): responseJson');
 return responseJson;
+}
+}
 }catch(error){
 this.main.log(error,0,'FetchUtils.fetchExt(): fetch error');
 this.main.utils.notify(this.errorMessage,2,'m');

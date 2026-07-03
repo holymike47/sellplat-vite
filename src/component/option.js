@@ -56,14 +56,8 @@ this.activeThemeDiv=this.optionSection.querySelector('.active-theme');//<input>[
 //images
 //logo
 this.logoImageDiv = this.optionSection.querySelector('#logoImageDiv');
-this.logoImageTemplate = this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(o.logoUrl,'grid'),width:"300", height:"300",divClasz:['w-50']});
-this.logoImageTemplate.insertIcon.remove();
+this.logoImageTemplate = this.main.media.getTemplate({src:$this.main.media.getMediaUrl(o.logoUrl),mediaType:"image",width:"300", height:"300",divClasz:['w-50']});
 this.main.pbu.replace(this.logoImageDiv,this.logoImageTemplate.div);
-//icon
-// this.iconImageDiv = this.optionSection.querySelector('#iconImageDiv');
-// this.iconImageTemplate = this.main.mh.getImageTemplate({src:$this.main.mh.getImageUrl(o.iconUrl,'grid'),width:"300", height:"300",divClasz:['w-50']});
-// this.iconImageTemplate.insertIcon.remove();
-// this.main.pbu.replace(this.iconImageDiv,this.iconImageTemplate.div);
 this.saveButton = this.optionSection.querySelector('#saveButton');
 addEvents();
 return this.optionSection;
@@ -80,8 +74,8 @@ async saveOption(){
 if(! this.main.vu.validate(this.optionSection.querySelectorAll('input.sp-form-control:not([type="radio"])'))){
     return;
 }
-let logoImageId = await this.main.mh.uploadToServer(this.logoImageDiv.querySelector('div.image-template'));
-//let iconImageId = await this.main.mh.uploadToServer(this.iconImageTemplate.div);
+let logoImageId = await this.main.media.uploadToServer(this.logoImageDiv.querySelector('div.media-template'));
+
 //don't touch these first properties
 let option = {
 id:this.option$.id,
@@ -101,7 +95,7 @@ if(r && r==this.option$.id){
 this.main.utils.setCache('option',this.option$);
 this.main.setTheme(this.option$);
 this.main.utils.notify("Saved",0,'m');
-this.main.mh.deleteFromServer(null);
+this.main.media.deleteFromServer(null);
 }
 }//
 }//class

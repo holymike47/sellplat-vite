@@ -1,8 +1,12 @@
 // @ts-check
-import '/node_modules/bootstrap/dist/css/bootstrap.min.css';
-import '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js';//??
-import '/node_modules/bootstrap-icons/font/bootstrap-icons.min.css';
-import '/node_modules/intl-tel-input/build/css/intlTelInput.min.css';
+// import '/node_modules/bootstrap/dist/css/bootstrap.min.css';
+// import '/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js';//??
+// import '/node_modules/bootstrap-icons/font/bootstrap-icons.min.css';
+// import '/node_modules/intl-tel-input/build/css/intlTelInput.min.css';
+import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+import '../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js';//??
+import '../node_modules/bootstrap-icons/font/bootstrap-icons.min.css';
+import '../node_modules/intl-tel-input/build/css/intlTelInput.min.css';
 import './style.css';
 import './sp.css';
 import intlTelInput from 'intl-tel-input';
@@ -16,7 +20,7 @@ import { Home } from './component/home.js';
 import { Login } from './component/login.js';
 import { Register } from './component/register.js';
 import { Dashboard } from './component/dashboard.js';
-import { MediaHandler } from './component/media-handler.js';
+import { Media } from './component/media.js';
 import { th } from 'intl-tel-input/i18n';
 
 class Main{
@@ -28,14 +32,13 @@ this.pbu =  new PbUtils(this);
 this.fu = new FetchUtils(this);
 this.vu = new ValidationUtils(this);
 this.tu = new TemplateUtils(this);
-// this.pb = new PageBuilder(this,null);
-// this.pb.isView = true;
-this.mh = new MediaHandler(this);
+this.media = new Media(this);
 this.oldImageIds = [];
 this.state = null;
 this.siteDomains = ['localhost:5173','localhost:4173','senplat.com','sp.senplat.com','sp2.senplat.com'];
 this.sitename = 'senplat';
 this.siteDomain = 'senplat.com';
+this.r2Domain = 'https://r2.senplat.com';
 this.host = 'senplat.com';
 this.username = '';
 this.isSiteDomain = false;
@@ -61,14 +64,16 @@ window.addEventListener('popstate', (e) => {
 let pathname = window.location.pathname;
 window.history.replaceState(null,'',pathname);
 this.host = window.location.host.toLowerCase();
+if(this.isDev()){
 this.host='godlysensation.com';
+}
 this.log(this.host,0,'Main.init(): host');
 this.isSite = this.host == this.siteDomain;
 this.isSiteDomain = this.host.endsWith('senplat.com');
 if(this.isSiteDomain){
   if(this.isSite){
       //root or =
-      this.username = this.sitename;
+      //this.username = this.sitename;
       if(this.isDev()){
       this.username = 'sp';
 }
@@ -200,7 +205,7 @@ archiveType:archiveType,
 isArchive:archiveType!='s',
 title:title,
 id:Number(id),
-isHome:id==0,
+isHome:(title=='home') && id==0,
 isView:true,
 isInit:isInit,
 nextState:null,
@@ -219,7 +224,7 @@ return homeState;
  */
 getHomeLink(component,postType,archiveType,title,id){
 let url;
-let isHome = title?.toLowerCase()=='home';
+let isHome = title=='home';
 if(isHome){
 url = '/';
 }else{

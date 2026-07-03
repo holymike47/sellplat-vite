@@ -222,6 +222,9 @@ this.main.pbu.hide(this.massDeleteButton);
  * @param {any} state 
  */
 async mount(state){
+//reset media ids 
+this.main.media.resetMediaIds();
+this.main.log(this.main.media.oldMediaIds,0,'Dashboard.mount(): oldMediaIds reset');
 let template = await this.process(state);
 this.main.pbu.replace(this.dashboardReplace,template);
 this.addRouteEvents(template);
@@ -319,7 +322,7 @@ this.main.pbu.hide(this.massDeleteButton);
  * 
  * @param {number[]} ids 
  */
-async deleteItems(ids){
+async deleteItems2(ids){
 let modal = this.main.utils.setModal('Confirm Deletion','blanc');
 this.main.pbu.listen(modal.confirm,'click',async ()=>{
 ///
@@ -345,6 +348,43 @@ this.idsToDelete = [];
 this.child.setListTable();
 this.main.utils.notify("Deleted",0,'d');
 this.main.mh.deleteFromServer({items:deletedItems,component:this.child.title});
+}
+modal.dismiss.click();
+});
+}//
+
+/**
+ * 
+ * @param {number[]} ids 
+ */
+async deleteItems(ids){
+let modal = this.main.utils.setModal('Confirm Deletion','blanc');
+this.main.pbu.listen(modal.confirm,'click',async ()=>{
+//lets extract media ids 
+let updatedItems =[];
+let deletedItems =[];
+let items = this.child.getItems();
+for(let i of items){
+if (this.idsToDelete.includes(i.id)){
+deletedItems.push(i);
+continue;
+}else{
+updatedItems.push(i);
+}
+}//for
+let mediaIds = this.main.media.addMediaIds({items:deletedItems,component:this.child.title});
+//
+let state = this.main.utils.clone(this.child.state);
+state.link = this.main.fu.getApi(state.url,[{n:'mediaIds',v:mediaIds}]);
+state.body = JSON.stringify(ids);
+state.method = "DELETE";
+let r = await this.main.fu.fetch(state);
+if(r==true){
+this.child.setItems(updatedItems);
+this.idsToDelete = [];
+this.child.setListTable();
+this.main.utils.notify("Deleted",0,'d');
+this.main.media.resetMediaIds();
 }
 modal.dismiss.click();
 });
