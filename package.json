@@ -6,14 +6,17 @@
   "scripts": {
     "dev": "vite --port 5173 --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.43.0",
     "eslint": "^9.36.0",
     "prettier": "^3.6.2",
     "video.js": "^8.23.9",
     "videojs-youtube": "^3.0.1",
-    "vite": "^7.1.6"
+    "vite": "^7.1.6",
+    "wrangler": "^4.107.0"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
