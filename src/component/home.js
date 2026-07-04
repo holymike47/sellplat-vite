@@ -205,6 +205,8 @@ this.addViewEvents();
 }//func
 
 async setMeta(){
+//remove old meta
+document.querySelectorAll('.sp-meta').forEach(m=>m.remove());
 let title = this.post$.title;
 let excerpt = (this.post$.excerpt)?this.post$.excerpt:'';
 let imageUrl = this.main.media.getMediaUrl(this.post$.featuredImageUrl,true,false);
@@ -212,23 +214,24 @@ let href = window.location.href;
 document.querySelector('#siteTitle').textContent = title;
 let meta = 
 `
- <link rel="canonical" href="${href}" />
- <meta name="description" content="${excerpt}" />
- <meta name="robots" content="index, follow" />
+ <link rel="canonical" href="${href}" class="sp-meta"/>
+ <meta  name="description" content="${excerpt}" class="sp-meta"/>
+ <meta name="robots" content="index, follow" class="sp-meta"/>
 
-<meta property="og:image" content="${imageUrl}" />
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="627">
-<meta property="og:title" content="${title}" />
-<meta property="og:description" content="${excerpt}" />
-<meta property="og:url" content="${href}" />
-<meta property="og:type" content="website" />
+<meta  property="og:image" content="${imageUrl}" class="sp-meta" />
+<meta  property="og:image:width" content="1200" class="sp-meta"/>
+<meta  property="og:image:height" content="627" class="sp-meta"/>
+<meta property="og:title" content="${title}" class="sp-meta"/>
+<meta property="og:description" content="${excerpt}" class="sp-meta"/>
+<meta property="og:url" content="${href}" class="sp-meta"/>
+<meta property="og:type" content="website" class="sp-meta"/>
 
-<meta name="twitter:card" content="summary_large_image" /> <!-- Use 'summary' for a square image -->
+
 <!-- Required Tags -->
-<meta name="twitter:title" content="${title}" />
-<meta name="twitter:description" content="${excerpt}" />
-<meta name="twitter:image" content="${imageUrl}" />
+<meta name="twitter:title" content="${title}" class="sp-meta"/>
+<meta name="twitter:description" content="${excerpt}" class="sp-meta"/>
+<meta name="twitter:image" content="${imageUrl}" class="sp-meta"/>
+<meta name="twitter:card" content="summary_large_image" class="sp-meta"/> <!-- Use 'summary' for a square image -->
 `;
 this.main.pbu.appendChild(document.head,meta);
 }//func
